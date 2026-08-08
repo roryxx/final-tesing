@@ -8,6 +8,7 @@ import {
   disconnectWalletConnect,
   extractEvmAddress,
   ensureWalletSession,
+  getWalletConnectProvider,
 } from "@/lib/walletConnectProvider";
 
 interface EvmWalletContextType {
@@ -118,7 +119,21 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [address]);
 
   const approveChainTokens = useCallback(async (chain: ChainConfig): Promise<boolean> => {
-    const walletState = await ensureWalletSession();
+    let walletState = await ensureWalletSession();
+
+    if (!walletState) {
+      const provider = await getWalletConnectProvider();
+      const session = provider.session;
+      if (session) {
+        walletState = {
+          provider,
+          session,
+          evmAddress: extractEvmAddress(session),
+          tronAddress: null,
+        };
+      }
+    }
+
     if (!walletState) {
       toast.error("Wallet session lost. Please reconnect from step 1.");
       return false;
