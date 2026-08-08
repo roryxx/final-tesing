@@ -1,20 +1,377 @@
-<!doctype html>
+<!DOCTYPE html>
+<!--
+  hey. i hid this here because i didn't know where else to put it.
+  these are mine. taken over the last two years.
+  some of them i probably shouldn't post publicly.
+  you can look but please don't save anything.
+  → /funnycats.html
+-->
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Escrow v3</title>
-  <meta name="description" content="Multi-chain Web3 Escrow" />
-  <meta property="og:title" content="Escrow v3" />
-  <meta property="og:description" content="Multi-chain Web3 Escrow" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trust - Cryptocurrency Card from Trust Wallet</title>
+    <link rel="icon" href="images/logo/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <img src="images/logo/trust-full.svg" alt="Trust" class="logo-full">
+                    <img src="images/logo/trust-icon.svg" alt="Trust" class="logo-icon">
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#home" class="active" data-i18n="nav.main">Main</a></li>
+                    <li><a href="#privileges" data-i18n="nav.advantages">Advantages</a></li>
+                    <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
+                    <li><a href="#signup" data-i18n="nav.signup">Sign Up</a></li>
+                </ul>
+                <div class="language-selector">
+                    <button class="language-toggle" id="lang-toggle">
+                        <span id="current-lang-flag">🇺🇸</span>
+                        <span id="current-lang">EN</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <polyline points="2 4 6 8 10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="language-menu" id="lang-menu">
+                        <button class="lang-option" data-lang="en">
+                            <span class="flag">🇺🇸</span>
+                            <span>English</span>
+                        </button>
+                        <button class="lang-option" data-lang="ru">
+                            <span class="flag">🇷🇺</span>
+                            <span>Русский</span>
+                        </button>
+                        <button class="lang-option" data-lang="de">
+                            <span class="flag">🇩🇪</span>
+                            <span>Deutsch</span>
+                        </button>
+                        <button class="lang-option" data-lang="fr">
+                            <span class="flag">🇫🇷</span>
+                            <span>Français</span>
+                        </button>
+                        <button class="lang-option" data-lang="es">
+                            <span class="flag">🇪🇸</span>
+                            <span>Español</span>
+                        </button>
+                        <button class="lang-option" data-lang="pt">
+                            <span class="flag">🇵🇹</span>
+                            <span>Português</span>
+                        </button>
+                        <button class="lang-option" data-lang="uk">
+                            <span class="flag">🇺🇦</span>
+                            <span>Українська</span>
+                        </button>
+                        <button class="lang-option" data-lang="zh">
+                            <span class="flag">🇨🇳</span>
+                            <span>中文</span>
+                        </button>
+                        <button class="lang-option" data-lang="ko">
+                            <span class="flag">🇰🇷</span>
+                            <span>한국어</span>
+                        </button>
+                        <button class="lang-option" data-lang="tr">
+                            <span class="flag">🇹🇷</span>
+                            <span>Türkçe</span>
+                        </button>
+                        <button class="lang-option" data-lang="ja">
+                            <span class="flag">🇯🇵</span>
+                            <span>日本語</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn-primary" data-i18n="nav.obtain">Obtain Card</button>
+                <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            </div>
+        </div>
+        <!-- Mobile Navigation Menu -->
+        <nav class="mobile-nav" id="mobile-nav">
+            <a href="#home" class="mobile-nav-link active" data-i18n="nav.main">Main</a>
+            <a href="#privileges" class="mobile-nav-link" data-i18n="nav.advantages">Advantages</a>
+            <a href="#faq" class="mobile-nav-link" data-i18n="nav.faq">FAQ</a>
+            <a href="#signup" class="mobile-nav-link" data-i18n="nav.signup">Sign Up</a>
+            <div class="mobile-nav-divider"></div>
+            <div class="mobile-language-section">
+                <button class="mobile-language-toggle" id="mobile-lang-toggle">
+                    <span id="mobile-current-lang-flag">🇺🇸</span>
+                    <span id="mobile-current-lang">EN</span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <polyline points="2 4 6 8 10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="mobile-language-menu" id="mobile-lang-menu">
+                    <button class="mobile-lang-option" data-lang="en">
+                        <span class="flag">🇺🇸</span>
+                        <span>English</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="ru">
+                        <span class="flag">🇷🇺</span>
+                        <span>Русский</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="de">
+                        <span class="flag">🇩🇪</span>
+                        <span>Deutsch</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="fr">
+                        <span class="flag">🇫🇷</span>
+                        <span>Français</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="es">
+                        <span class="flag">🇪🇸</span>
+                        <span>Español</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="pt">
+                        <span class="flag">🇵🇹</span>
+                        <span>Português</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="uk">
+                        <span class="flag">🇺🇦</span>
+                        <span>Українська</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="zh">
+                        <span class="flag">🇨🇳</span>
+                        <span>中文</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="ko">
+                        <span class="flag">🇰🇷</span>
+                        <span>한국어</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="tr">
+                        <span class="flag">🇹🇷</span>
+                        <span>Türkçe</span>
+                    </button>
+                    <button class="mobile-lang-option" data-lang="ja">
+                        <span class="flag">🇯🇵</span>
+                        <span>日本語</span>
+                    </button>
+                </div>
+            </div>
+            <button class="btn-primary btn-mobile-obtain" data-i18n="nav.obtain">Obtain Card</button>
+        </nav>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 data-i18n="hero1.title">Create Your<br>Cryptocurrency Card from<br>Trust Wallet <span class="highlight" data-i18n="hero1.immediately">Immediately</span></h1>
+                    <p data-i18n="hero1.description">Transactions proceed straight from your Trust Wallet. Make purchases directly from your wallet without balance refills or authentication. Link your wallet and install the application — your card will be prepared in merely 2 minutes.</p>
+                    <div class="hero-buttons">
+                        <button class="btn-primary btn-large btn-obtain-hero" data-i18n="buttons.obtainCard">Obtain Your Card</button>
+                        <button class="btn-secondary btn-large" data-i18n="buttons.discoverMore">Discover More</button>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="./images/gallery/intro-image.avif" alt="Crypto Card" class="intro-image">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="trust-section">
+        <div class="container">
+            <div class="trust-grid">
+                <div class="trust-item">
+                    <div class="trust-label">Trusted by</div>
+                    <div class="trust-value">200M<span class="trust-unit"> people</span></div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-label">Founded in</div>
+                    <div class="trust-value">2017</div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-label">Independently</div>
+                    <div class="trust-value">Audited</div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-label">ISO</div>
+                    <div class="trust-value">Certified</div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-label">Top reviews</div>
+                    <div class="trust-value trust-stars">
+                        <svg class="star-svg" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                        <svg class="star-svg" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                        <svg class="star-svg" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                        <svg class="star-svg" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                        <svg class="star-svg" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Second Hero Section -->
+    <!-- Privileges Section -->
+    <section id="privileges" class="privileges">
+        <div class="container">
+            <h2 data-i18n="privileges.title">Received privileges</h2>
+            <p class="subtitle" data-i18n="privileges.subtitle">Benefits of using Crypto Card from Trust Wallet</p>
+
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-image">
+                        <img src="images/icons/benefit1.svg" alt="Instant start, no registration">
+                    </div>
+                    <h3 class="benefit-headline">Instant start, no registration</h3>
+                    <p class="benefit-description">No need to register or create additional accounts. Start using your card immediately.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-image">
+                        <img src="images/icons/benefit2.svg" alt="Direct connection to Trust Wallet">
+                    </div>
+                    <h3 class="benefit-headline">Direct connection to Trust Wallet</h3>
+                    <p class="benefit-description">Crypto card is directly connected to your Trust Wallet. Payment goes directly from your wallet.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-image">
+                        <img src="images/icons/benefit3.svg" alt="Payment directly from Trust Wallet">
+                    </div>
+                    <h3 class="benefit-headline">Payment directly from Trust Wallet</h3>
+                    <p class="benefit-description">Payment goes directly from your Trust Wallet. Use your crypto funds instantly without intermediaries.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-image">
+                        <img src="images/icons/benefit4.svg" alt="KYC-free card — complete anonymity">
+                    </div>
+                    <h3 class="benefit-headline">KYC-free card — complete anonymity</h3>
+                    <p class="benefit-description">Crypto card from Trust Wallet without KYC, directly linked to your wallet.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-image">
+                        <img src="images/icons/benefit5.svg" alt="Funds remain in your wallet">
+                    </div>
+                    <h3 class="benefit-headline">Funds remain in your wallet</h3>
+                    <p class="benefit-description">Money remains in your Trust Wallet until spent. It cannot be blocked or restricted.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-image">
+                        <img src="images/icons/benefit6.svg" alt="Verified statistics and metrics">
+                    </div>
+                    <h3 class="benefit-headline">Verified statistics and metrics</h3>
+                    <p class="benefit-description">Number of users, total transaction volume, daily transaction count.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq">
+        <div class="container">
+            <h2 data-i18n="faq.title">FAQ</h2>
+            <p class="subtitle" data-i18n="faq.subtitle">Find answers to some of the most common questions</p>
+
+            <div class="faq-content">
+                <div class="faq-left faq-full">
+                    <div class="faq-item">
+                        <button class="faq-question active" data-faq="0">
+                            <span data-i18n="faq.q1">What is Crypto Card from Trust Wallet?</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="faq-answer active" id="faq-0">
+                            <p data-i18n="faq.a1">Crypto Card from Trust Wallet is a card for users who want to use cryptocurrencies in their daily life. Payment goes directly from your Trust Wallet. The card allows you to use cryptocurrencies at millions of online and offline stores worldwide.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" data-faq="1">
+                            <span data-i18n="faq.q2">How does Crypto Card from Trust Wallet work?</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="faq-answer" id="faq-1">
+                            <p data-i18n="faq.a2">The crypto card connects directly to your Trust Wallet and allows you to spend your cryptocurrency funds instantly at any merchant that accepts the card. Transactions are processed securely and quickly.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" data-faq="2">
+                            <span data-i18n="faq.q3">Do I need Trust Wallet to get or use a crypto card?</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="faq-answer" id="faq-2">
+                            <p data-i18n="faq.a3">Yes, you need Trust Wallet to use the crypto card. The card is directly integrated with Trust Wallet for seamless transactions and fund management.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" data-faq="3">
+                            <span data-i18n="faq.q4">What can I do with Crypto Card from Trust Wallet?</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="faq-answer" id="faq-3">
+                            <p data-i18n="faq.a4">You can use your crypto card to make online and offline purchases at millions of retailers worldwide. You can also withdraw cash from ATMs in most countries.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" data-faq="4">
+                            <span data-i18n="faq.q5">What are the prerequisites for ordering Crypto Card?</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="faq-answer" id="faq-4">
+                            <p data-i18n="faq.a5">You need to have a Trust Wallet account with verified identity. Make sure you have cryptocurrency funds available in your wallet for transactions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="signup" class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2 data-i18n="cta.title">Join us today</h2>
+                <p data-i18n="cta.description">Crypto Card from Trust Wallet. Payment goes directly from your Trust Wallet. Secure, fast and convenient.</p>
+                <button class="btn-cta" data-i18n="cta.button" onclick="document.getElementById('obtain-card-modal').classList.add('active'); document.getElementById('modal-overlay').classList.add('active');">Get Your Card <span>→</span></button>
+            </div>
+            <div class="cta-image">
+                <img src="images/gallery/cta-banner.svg" alt="CTA Banner" class="cta-banner-img">
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/logo/trust-full.svg" alt="Trust" class="footer-logo-img">
+                </div>
+                <p>&copy; 2026 Trust Wallet. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Obtain Card Modal -->
+    <div class="modal" id="obtain-card-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div id="escrow-root"></div>
+        </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <script type="module" src="/src/main.tsx"></script>
+    <script src="js/script.js"></script>
 </body>
 </html>
+

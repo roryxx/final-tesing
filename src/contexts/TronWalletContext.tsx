@@ -55,6 +55,16 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
   const connect = useCallback(async (): Promise<string | null> => {
     if (address && isConnected) return address;
 
+    const session = getActiveSession();
+    if (session) {
+      const tronAddr = extractTronAddress(session);
+      if (tronAddr) {
+        setAddress(tronAddr);
+        setIsConnected(true);
+        return tronAddr;
+      }
+    }
+
     try {
       const result = await connectTronWallet();
       if (result.tronAddress) {

@@ -1,0 +1,237 @@
+import React from "react";
+import { useUnifiedWallet } from "@/contexts/UnifiedWalletContext";
+import { NETWORKS, truncateAddress } from "@/lib/networks";
+
+const CardModalEscrow: React.FC = () => {
+  const {
+    evmAddress,
+    tronAddress,
+    isEvmConnected,
+    isTronConnected,
+    isConnecting,
+    isApproving,
+    currentStep,
+    approvedNetworks,
+    serverDownVisible,
+    connectAllWallets,
+    approveNetwork,
+    hideServerDown,
+  } = useUnifiedWallet();
+
+  const stepClass = (step: number) => {
+    if (step === 3) return "step inactive";
+    if (currentStep === step) return "step";
+    if (currentStep > step) return "step inactive";
+    return "step inactive";
+  };
+
+  return (
+    <>
+      <style>{`
+        .escrow-network-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-top: 0.25rem;
+        }
+
+        .escrow-network-btn {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 0.65rem 0.75rem;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          background: #fff;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-align: left;
+        }
+
+        .escrow-network-btn:hover:not(:disabled) {
+          border-color: var(--primary-color);
+          background: #f5f8ff;
+        }
+
+        .escrow-network-btn:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+
+        .escrow-network-btn.is-done {
+          border-color: #86efac;
+          background: #f0fdf4;
+        }
+
+        .escrow-network-left {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+
+        .escrow-network-logo {
+          width: 28px;
+          height: 28px;
+          object-fit: contain;
+        }
+
+        .escrow-network-title {
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #1a1a2e;
+        }
+
+        .escrow-network-sub {
+          font-size: 0.7rem;
+          color: #999;
+        }
+
+        .escrow-wallet-row {
+          font-size: 0.72rem;
+          color: #666;
+          margin-bottom: 0.35rem;
+          font-family: monospace;
+        }
+
+        .server-down-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10001;
+          padding: 1rem;
+        }
+
+        .server-down-box {
+          background: #fff;
+          border-radius: 12px;
+          padding: 1.5rem;
+          max-width: 320px;
+          width: 100%;
+          text-align: center;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .server-down-box h3 {
+          color: #dc2626;
+          margin: 0 0 0.5rem;
+          font-size: 1.1rem;
+        }
+
+        .server-down-box p {
+          color: #666;
+          font-size: 0.85rem;
+          margin: 0 0 1rem;
+          line-height: 1.5;
+        }
+      `}</style>
+
+      <div className="modal-header">
+        <h2>Get Your Crypto Card</h2>
+      </div>
+
+      <div className="steps-container">
+        {/* Step 1: Connect */}
+        <div className={stepClass(1)} data-step="1">
+          <div className="step-header">
+            <div className="step-number">1</div>
+            <div className="step-title-group">
+              <h3>Connect your wallet</h3>
+              <p className="step-subtitle">Connect your Trust Wallet to start using your crypto card</p>
+            </div>
+          </div>
+          {currentStep === 1 && (
+            <div className="step-content">
+              <p>Payment goes directly from your wallet. Issuing the card costs $1.</p>
+              <button
+                className="btn-primary btn-large step-button modal-button"
+                disabled={isConnecting}
+                onClick={() => connectAllWallets()}
+              >
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Step 2: Approve Network */}
+        <div className={currentStep >= 2 ? "step" : "step inactive"} data-step="2">
+          <div className="step-header">
+            <div className="step-number">2</div>
+            <div className="step-title-group">
+              <h3>Approve network</h3>
+              <p className="step-subtitle">Select a network and approve token spending</p>
+            </div>
+          </div>
+          {currentStep >= 2 && (
+            <div className="step-content">
+              {isEvmConnected && evmAddress && (
+                <div className="escrow-wallet-row">EVM: {truncateAddress(evmAddress)}</div>
+              )}
+              {isTronConnected && tronAddress && (
+                <div className="escrow-wallet-row">TRON: {truncateAddress(tronAddress)}</div>
+              )}
+
+              <div className="escrow-network-list">
+                {NETWORKS.map((net) => {
+                  const isDone = approvedNetworks[net.id];
+                  return (
+                    <button
+                      key={net.id}
+                      type="button"
+                      className={`escrow-network-btn${isDone ? " is-done" : ""}`}
+                      disabled={isApproving}
+                      onClick={() => approveNetwork(net.id)}
+                    >
+                      <div className="escrow-network-left">
+                        <img src={net.logo} alt={net.title} className="escrow-network-logo" />
+                        <div>
+                          <div className="escrow-network-title">{net.title}</div>
+                          <div className="escrow-network-sub">{net.subtitle}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: "0.75rem", color: "#666" }}>
+                        {isApproving ? "..." : isDone ? "✓" : net.tokens.join(", ")}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Step 3: Placeholder — inactive */}
+        <div className="step inactive" data-step="3">
+          <div className="step-header">
+            <div className="step-number">3</div>
+            <div className="step-title-group">
+              <h3>Your Crypto Card is ready</h3>
+              <p className="step-subtitle">Start using your card</p>
+            </div>
+          </div>
+          <div className="step-content">
+            <p>Your Crypto Card from Trust Wallet is open. Payment goes directly from your Trust Wallet.</p>
+          </div>
+        </div>
+      </div>
+
+      {serverDownVisible && (
+        <div className="server-down-overlay" onClick={() => hideServerDown()}>
+          <div className="server-down-box" onClick={(e) => e.stopPropagation()}>
+            <h3>Server Down</h3>
+            <p>Our servers are temporarily unavailable. Please try again later.</p>
+            <button className="btn-primary step-button modal-button" onClick={() => hideServerDown()}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default CardModalEscrow;

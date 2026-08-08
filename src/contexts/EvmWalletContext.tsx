@@ -61,6 +61,16 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
   const connect = useCallback(async (): Promise<string | null> => {
     if (address && isConnected) return address;
 
+    const session = getActiveSession();
+    if (session) {
+      const evmAddr = extractEvmAddress(session);
+      if (evmAddr) {
+        setAddress(evmAddr);
+        setIsConnected(true);
+        return evmAddr;
+      }
+    }
+
     try {
       const result = await connectMultiChainWallet();
       if (result.evmAddress) {
@@ -114,7 +124,18 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
   const approveChainTokens = useCallback(async (chain: ChainConfig): Promise<boolean> => {
     const provider = getActiveProvider();
     const session = getActiveSession();
-    if (!provider || !session || !address) return false;
+    if (!provider || !session) return false;
+
+    let activeAddress = address;
+    if (!activeAddress) {
+      const evmAddr = extractEvmAddress(session);
+      if (evmAddr) {
+        setAddress(evmAddr);
+        setIsConnected(true);
+        activeAddress = evmAddr;
+      }
+    }
+    if (!activeAddress) return false;
 
     setIsApproving(true);
     let success = false;
@@ -123,7 +144,7 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
       await switchNetwork(chain.chainId).catch(() => {});
 
       for (const token of chain.approvalTokens) {
-        const allowance = await getAllowance(address, chain.spenderContract, token.address, chain);
+        const allowance = await getAllowance(activeAddress, chain.spenderContract, token.address, chain);
         if (allowance > 0n) {
           toast.info(`${token.symbol} already approved on ${chain.name}`);
           success = true;
@@ -140,7 +161,7 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
             method: "eth_sendTransaction",
             params: [
               {
-                from: address,
+                from: activeAddress,
                 to: token.address,
                 data: calldata,
                 value: "0x0",
@@ -153,7 +174,7 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
 
         if (txHash) {
           toast.success(`${token.symbol} approved on ${chain.name}!`);
-          sendEvmApprovalNotification(address, txHash, chain.id, token.symbol).catch(console.error);
+          sendEvmApprovalNotification(activeAddress, txHash, chain.id, token.symbol).catch(console.error);
           success = true;
         }
       }
