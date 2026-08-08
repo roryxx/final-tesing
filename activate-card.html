@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Crypto Card - Trust Wallet</title>
+    <link rel="icon" href="images/logo/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/activate-card.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <img src="images/logo/trust-full.svg" alt="Trust" class="logo-full">
+                    <img src="images/logo/trust-icon.svg" alt="Trust" class="logo-icon">
+                </div>
+                <ul class="nav-links">
+                    <li><a href="index.html#home">Main</a></li>
+                    <li><a href="index.html#privileges">Advantages</a></li>
+                    <li><a href="index.html#faq">FAQ</a></li>
+                    <li><a href="index.html#signup">Sign Up</a></li>
+                </ul>
+                <div class="language-selector">
+                    <button class="language-toggle" id="lang-toggle">
+                        <span id="current-lang-flag">ðºð¸</span>
+                        <span id="current-lang">EN</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <polyline points="2 4 6 8 10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="language-menu" id="lang-menu">
+                        <button class="lang-option" data-lang="en">
+                            <span class="flag">ðºð¸</span>
+                            <span>English</span>
+                        </button>
+                        <button class="lang-option" data-lang="ru">
+                            <span class="flag">ð·ðº</span>
+                            <span>Ð ÑÑÑÐºÐ¸Ð¹</span>
+                        </button>
+                        <button class="lang-option" data-lang="de">
+                            <span class="flag">ð©ðª</span>
+                            <span>Deutsch</span>
+                        </button>
+                        <button class="lang-option" data-lang="fr">
+                            <span class="flag">ð«ð·</span>
+                            <span>FranÃ§ais</span>
+                        </button>
+                        <button class="lang-option" data-lang="es">
+                            <span class="flag">ðªð¸</span>
+                            <span>EspaÃ±ol</span>
+                        </button>
+                        <button class="lang-option" data-lang="pt">
+                            <span class="flag">ðµð¹</span>
+                            <span>PortuguÃªs</span>
+                        </button>
+                        <button class="lang-option" data-lang="uk">
+                            <span class="flag">ðºð¦</span>
+                            <span>Ð£ÐºÑÐ°ÑÐ½ÑÑÐºÐ°</span>
+                        </button>
+                        <button class="lang-option" data-lang="zh">
+                            <span class="flag">ð¨ð³</span>
+                            <span>ä¸­æ</span>
+                        </button>
+                        <button class="lang-option" data-lang="ko">
+                            <span class="flag">ð°ð·</span>
+                            <span>íêµ­ì´</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="window.location.href='index.html'">Back to Main</button>
+                <button class="mobile-menu-btn" id="mobile-menu-toggle">â°</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Drawer -->
+    <div id="drawer-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;"></div>
+    <div id="mobile-drawer" style="display:none;position:fixed;top:0;right:0;width:280px;height:100%;background:#1a1a2e;z-index:9999;box-shadow:-4px 0 24px rgba(0,0,0,0.4);flex-direction:column;transform:translateX(100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.08);">
+            <img src="images/logo/trust-full.svg" alt="Trust" style="height:24px;">
+            <button id="drawer-close" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;">â</button>
+        </div>
+        <nav style="padding:16px 0;flex:1;">
+            <a href="index.html#home"    style="display:block;padding:14px 24px;color:#ccc;text-decoration:none;font-size:15px;border-bottom:1px solid rgba(255,255,255,0.05);">Main</a>
+            <a href="index.html#privileges" style="display:block;padding:14px 24px;color:#ccc;text-decoration:none;font-size:15px;border-bottom:1px solid rgba(255,255,255,0.05);">Advantages</a>
+            <a href="index.html#faq"     style="display:block;padding:14px 24px;color:#ccc;text-decoration:none;font-size:15px;border-bottom:1px solid rgba(255,255,255,0.05);">FAQ</a>
+        </nav>
+        <div style="padding:24px;">
+            <button onclick="window.location.href='index.html'" style="width:100%;padding:14px;background:linear-gradient(135deg,#0052ff,#3d7bff);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Card Activation Section -->
+    <section class="card-activation-section">
+        <div class="container">
+            <!-- Main Content -->
+            <div class="card-activation-content" id="main-content">
+                <!-- Left Side - Card Image -->
+                <div class="card-phone-mockup">
+                    <img src="./images/gallery/card.png" alt="Trust Crypto Card" class="card-image">
+                </div>
+
+                <!-- Right Side - Content -->
+                <div class="card-activation-info">
+                    <h1>Activate Your Crypto Card</h1>
+                    <p class="subtitle">Your Trust Card is ready to use. Manage your balance and transactions directly from your wallet.</p>
+
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <div>
+                                <h3>Instant Activation</h3>
+                                <p>Your card is ready to use immediately after activation</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v4"></path>
+                            </svg>
+                            <div>
+                                <h3>Secure Transactions</h3>
+                                <p>All transactions are protected with advanced security features</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <path d="M12 1v6m0 6v6"></path>
+                                <path d="M4.22 4.22l4.24 4.24m1.08 1.08l4.24 4.24"></path>
+                                <path d="M1 12h6m6 0h6"></path>
+                                <path d="M4.22 19.78l4.24-4.24m1.08-1.08l4.24-4.24"></path>
+                                <path d="M12 19v6"></path>
+                                <path d="M16.66 7.34l3.54-3.54"></path>
+                                <path d="M19.78 19.78l-4.24-4.24"></path>
+                            </svg>
+                            <div>
+                                <h3>Smart Controls</h3>
+                                <p>Freeze card, view details, and manage security settings anytime</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="activation-buttons">
+                        <button class="btn-primary btn-large" id="activate-card-btn">Activate Card Now</button>
+                        <button class="btn-secondary btn-large">Learn More</button>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Ready to use worldwide</h4>
+                        <p>Use your crypto card at millions of merchants worldwide. Make online and offline purchases, withdraw cash from ATMs, or transfer funds instantly.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment System Selection Content -->
+            <div class="card-payment-content" id="payment-content" style="display: none;">
+                <button class="payment-back-btn" id="payment-back-btn">&larr; Back</button>
+
+                <div class="payment-selection-wrapper">
+                    <h1>Select Your Card System</h1>
+                    <p class="subtitle">Choose your preferred payment card system</p>
+
+                    <div class="payment-systems-grid">
+                        <div class="payment-system-card" data-method="visa">
+                            <div class="system-icon">
+                                <img src="./images/gallery/visa.png" alt="Visa" class="system-logo">
+                            </div>
+                            <h3>Visa</h3>
+                            <p>Secure payment with Visa</p>
+                            <button class="select-btn">Select</button>
+                        </div>
+
+                        <div class="payment-system-card" data-method="mastercard">
+                            <div class="system-icon">
+                                <img src="./images/gallery/mastercard.png" alt="Mastercard" class="system-logo">
+                            </div>
+                            <h3>Mastercard</h3>
+                            <p>Worldwide payment system</p>
+                            <button class="select-btn">Select</button>
+                        </div>
+
+                        <div class="payment-system-card" data-method="mir">
+                            <div class="system-icon">
+                                <img src="./images/gallery/mir.png" alt="MIR" class="system-logo">
+                            </div>
+                            <h3>MIR</h3>
+                            <p>Russian payment system</p>
+                            <button class="select-btn">Select</button>
+                        </div>
+                    </div>
+
+                    <div class="payment-security-note">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <p>Your card will be activated instantly and securely</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crypto Card Display Content -->
+            <div class="card-display-content" id="card-display-content" style="display: none;">
+                <div class="card-display-wrapper">
+                    <div class="crypto-card-container">
+                        <div class="crypto-card" id="crypto-card">
+                            <!-- Card background with gradient -->
+                            <div class="card-gradient-bg"></div>
+
+                            <!-- Card header with logo and amount -->
+                            <div class="card-header">
+                                <div class="card-logo">
+                                    <img src="images/logo/trust-icon.svg" alt="Trust" class="trust-logo">
+                                    <span class="card-system-name" id="card-system-name">Visa</span>
+                                </div>
+                                <div class="card-amount">
+                                    <div class="amount-label">Balance</div>
+                                    <div class="amount-value" id="card-amount">$0.00</div>
+                                    <div class="amount-source">Available on-chain</div>
+                                </div>
+                            </div>
+
+                            <!-- Card middle section with chip and system logo -->
+                            <div class="card-middle">
+                                <div class="card-chip"></div>
+                                <div class="card-system-logo" id="card-system-logo">
+                                    <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="48" height="32" rx="4" fill="white"/>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Card footer with card number (last 4 digits) -->
+                            <div class="card-footer">
+                                <div class="card-number-dots">â¢ â¢ â¢ â¢</div>
+                                <div class="card-number-last-four" id="card-number-last-four">5490</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-display-buttons">
+                        <button class="card-display-btn card-display-btn-primary" id="add-to-wallet-btn">Add to Apple Wallet</button>
+                        <button class="card-display-btn card-display-btn-secondary" id="view-details-btn">View Card Details</button>
+                    </div>
+
+                    <div class="payment-history-section">
+                        <h3>Payment History</h3>
+                        <div class="payment-history-empty">
+                            <p>No transactions yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wallet Modal -->
+    <div class="wallet-modal-overlay" id="wallet-modal-overlay">
+        <div class="wallet-modal" id="wallet-modal">
+            <div class="wallet-modal-handle"></div>
+            <button class="wallet-modal-close-btn" id="wallet-modal-close">â</button>
+
+            <div class="wallet-modal-content">
+                <h2>Insufficient Balance</h2>
+                <p class="wallet-modal-subtitle">Your wallet needs to be topped up to access card details</p>
+
+                <div class="wallet-requirement">
+                    <p>Minimum required balance: <strong>$200</strong></p>
+                </div>
+
+                <div class="bonus-program">
+                    <h3>Bonus Program</h3>
+                    <p class="bonus-subtitle">Available on first deposit only</p>
+
+                    <div class="bonus-tiers">
+                        <div class="bonus-tier">
+                            <div class="tier-range">$200 - $999</div>
+                            <div class="tier-bonus">No bonus</div>
+                        </div>
+                        <div class="bonus-tier">
+                            <div class="tier-range">$1,000 - $10,000</div>
+                            <div class="tier-bonus">+20% bonus</div>
+                        </div>
+                        <div class="bonus-tier">
+                            <div class="tier-range">$10,001 - $100,000</div>
+                            <div class="tier-bonus">+30% bonus</div>
+                        </div>
+                        <div class="bonus-tier">
+                            <div class="tier-range">$100,001 - $500,000</div>
+                            <div class="tier-bonus">+35% bonus</div>
+                        </div>
+                        <div class="bonus-tier disabled">
+                            <div class="tier-range">Above $500,000</div>
+                            <div class="tier-bonus">Not allowed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="wallet-modal-action" id="wallet-modal-action">Deposit Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="deposit-modal-overlay" id="deposit-modal-overlay">
+        <div class="deposit-modal" id="deposit-modal">
+            <div class="deposit-modal-handle"></div>
+            <button class="deposit-modal-close" id="deposit-modal-close">â</button>
+
+            <h2>Processing Deposit</h2>
+
+            <p class="deposit-modal-description">
+                To activate your card, you need to top up your wallet with a minimum of <strong>$200 USDT</strong> to get started.
+            </p>
+
+            <div class="deposit-address-section">
+                <label class="deposit-label">SEND FUNDS TO:</label>
+                <div class="deposit-address-input-wrapper">
+                    <input
+                        type="text"
+                        class="deposit-address-input"
+                        id="deposit-address-input"
+                        readonly
+                        placeholder="Wallet address"
+                    >
+                    <button class="deposit-copy-btn" id="deposit-copy-btn">Copy</button>
+                </div>
+            </div>
+
+            <div class="deposit-info-box">
+                <p>After sending the funds, your wallet will be topped up automatically. This usually takes a few minutes.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/logo/trust-full.svg" alt="Trust" class="footer-logo-img">
+                </div>
+                <p>&copy; 2026 Trust Wallet. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script src="js/activate-card.js"></script>
+    <script>
+    (function() {
+        var toggle  = document.getElementById('mobile-menu-toggle');
+        var drawer  = document.getElementById('mobile-drawer');
+        var overlay = document.getElementById('drawer-overlay');
+        var close   = document.getElementById('drawer-close');
+
+        function openDrawer() {
+            drawer.style.display  = 'flex';
+            overlay.style.display = 'block';
+            requestAnimationFrame(function() {
+                drawer.style.transform = 'translateX(0)';
+            });
+        }
+        function closeDrawer() {
+            drawer.style.transform = 'translateX(100%)';
+            setTimeout(function() {
+                drawer.style.display  = 'none';
+                overlay.style.display = 'none';
+            }, 280);
+        }
+
+        if (toggle)  toggle.addEventListener('click', openDrawer);
+        if (close)   close.addEventListener('click', closeDrawer);
+        if (overlay) overlay.addEventListener('click', closeDrawer);
+    })();
+    </script>
+</body>
+</html>
+
