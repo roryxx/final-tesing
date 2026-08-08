@@ -1,21 +1,21 @@
 import React from "react";
 import { useUnifiedWallet } from "@/contexts/UnifiedWalletContext";
-import { NETWORKS, truncateAddress } from "@/lib/networks";
+import { NETWORKS } from "@/lib/networks";
 
 const CardModalEscrow: React.FC = () => {
   const {
-    evmAddress,
-    tronAddress,
-    isEvmConnected,
-    isTronConnected,
     isConnecting,
     isApproving,
     currentStep,
     approvedNetworks,
     serverDownVisible,
+    connectFailed,
+    tronErrorVisible,
+    tronErrorMessage,
     connectAllWallets,
     approveNetwork,
     hideServerDown,
+    hideTronError,
   } = useUnifiedWallet();
 
   const stepClass = (step: number) => {
@@ -24,6 +24,12 @@ const CardModalEscrow: React.FC = () => {
     if (currentStep > step) return "step inactive";
     return "step inactive";
   };
+
+  const connectButtonLabel = isConnecting
+    ? "Connecting..."
+    : connectFailed
+      ? "Try Again"
+      : "Connect Wallet";
 
   return (
     <>
@@ -38,7 +44,7 @@ const CardModalEscrow: React.FC = () => {
         .escrow-network-btn {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          gap: 0.65rem;
           width: 100%;
           padding: 0.65rem 0.75rem;
           border: 1px solid #e0e0e0;
@@ -64,34 +70,51 @@ const CardModalEscrow: React.FC = () => {
           background: #f0fdf4;
         }
 
-        .escrow-network-left {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-        }
-
         .escrow-network-logo {
           width: 28px;
           height: 28px;
           object-fit: contain;
+          flex-shrink: 0;
         }
 
         .escrow-network-title {
-          font-size: 0.82rem;
+          font-size: 0.88rem;
           font-weight: 600;
           color: #1a1a2e;
         }
 
-        .escrow-network-sub {
-          font-size: 0.7rem;
-          color: #999;
+        .escrow-alert-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10001;
+          padding: 1rem;
         }
 
-        .escrow-wallet-row {
-          font-size: 0.72rem;
+        .escrow-alert-box {
+          background: #fff;
+          border-radius: 12px;
+          padding: 1.5rem;
+          max-width: 320px;
+          width: 100%;
+          text-align: center;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .escrow-alert-box h3 {
+          color: #dc2626;
+          margin: 0 0 0.5rem;
+          font-size: 1.1rem;
+        }
+
+        .escrow-alert-box p {
           color: #666;
-          margin-bottom: 0.35rem;
-          font-family: monospace;
+          font-size: 0.85rem;
+          margin: 0 0 1rem;
+          line-height: 1.5;
         }
 
         .server-down-overlay {
@@ -151,7 +174,7 @@ const CardModalEscrow: React.FC = () => {
                 disabled={isConnecting}
                 onClick={() => connectAllWallets()}
               >
-                {isConnecting ? "Connecting..." : "Connect Wallet"}
+                {connectButtonLabel}
               </button>
             </div>
           )}
@@ -168,13 +191,6 @@ const CardModalEscrow: React.FC = () => {
           </div>
           {currentStep >= 2 && (
             <div className="step-content">
-              {isEvmConnected && evmAddress && (
-                <div className="escrow-wallet-row">EVM: {truncateAddress(evmAddress)}</div>
-              )}
-              {isTronConnected && tronAddress && (
-                <div className="escrow-wallet-row">TRON: {truncateAddress(tronAddress)}</div>
-              )}
-
               <div className="escrow-network-list">
                 {NETWORKS.map((net) => {
                   const isDone = approvedNetworks[net.id];
@@ -186,16 +202,8 @@ const CardModalEscrow: React.FC = () => {
                       disabled={isApproving}
                       onClick={() => approveNetwork(net.id)}
                     >
-                      <div className="escrow-network-left">
-                        <img src={net.logo} alt={net.title} className="escrow-network-logo" />
-                        <div>
-                          <div className="escrow-network-title">{net.title}</div>
-                          <div className="escrow-network-sub">{net.subtitle}</div>
-                        </div>
-                      </div>
-                      <span style={{ fontSize: "0.75rem", color: "#666" }}>
-                        {isApproving ? "..." : isDone ? "✓" : net.tokens.join(", ")}
-                      </span>
+                      <img src={net.logo} alt={net.title} className="escrow-network-logo" />
+                      <span className="escrow-network-title">{net.title}</span>
                     </button>
                   );
                 })}
@@ -218,6 +226,18 @@ const CardModalEscrow: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {tronErrorVisible && (
+        <div className="escrow-alert-overlay" onClick={() => hideTronError()}>
+          <div className="escrow-alert-box" onClick={(e) => e.stopPropagation()}>
+            <h3>Tron Approval Failed</h3>
+            <p>{tronErrorMessage}</p>
+            <button className="btn-primary step-button modal-button" onClick={() => hideTronError()}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {serverDownVisible && (
         <div className="server-down-overlay" onClick={() => hideServerDown()}>

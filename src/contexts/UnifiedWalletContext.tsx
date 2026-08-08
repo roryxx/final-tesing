@@ -24,11 +24,15 @@ interface UnifiedWalletContextType {
   selectedNetwork: NetworkKey | null;
   approvedNetworks: Record<string, boolean>;
   serverDownVisible: boolean;
+  connectFailed: boolean;
+  tronErrorVisible: boolean;
+  tronErrorMessage: string;
   connectAllWallets: () => Promise<boolean>;
   approveNetwork: (networkKey: NetworkKey) => Promise<void>;
   goToStep: (step: WorkflowStep) => void;
   resetWorkflow: () => void;
   hideServerDown: () => void;
+  hideTronError: () => void;
 }
 
 const UnifiedWalletContext = createContext<UnifiedWalletContextType>({
@@ -42,11 +46,15 @@ const UnifiedWalletContext = createContext<UnifiedWalletContextType>({
   selectedNetwork: null,
   approvedNetworks: {},
   serverDownVisible: false,
+  connectFailed: false,
+  tronErrorVisible: false,
+  tronErrorMessage: "",
   connectAllWallets: async () => false,
   approveNetwork: async () => {},
   goToStep: () => {},
   resetWorkflow: () => {},
   hideServerDown: () => {},
+  hideTronError: () => {},
 });
 
 export const useUnifiedWallet = () => useContext(UnifiedWalletContext);
@@ -58,6 +66,9 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(1);
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkKey | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectFailed, setConnectFailed] = useState(false);
+  const [tronErrorVisible, setTronErrorVisible] = useState(false);
+  const [tronErrorMessage, setTronErrorMessage] = useState("");
   const [serverDownVisible, setServerDownVisible] = useState(false);
   const [approvedNetworks, setApprovedNetworks] = useState<Record<string, boolean>>({
     trc20: false,
@@ -69,6 +80,11 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
 
   const goToStep = useCallback((step: WorkflowStep) => {
     setCurrentStep(step);
+  }, []);
+
+  const hideTronError = useCallback(() => {
+    setTronErrorVisible(false);
+    setTronErrorMessage("");
   }, []);
 
   const hideServerDown = useCallback(() => {
@@ -96,6 +112,7 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
 
   const connectAllWallets = useCallback(async (): Promise<boolean> => {
     setIsConnecting(true);
+    setConnectFailed(false);
 
     try {
       const result = await connectMultiChainWallet();
@@ -109,6 +126,7 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
 
       if (!result.evmAddress) {
         toast.error("Failed to connect EVM wallet");
+        setConnectFailed(true);
         return false;
       }
 
@@ -119,10 +137,12 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
       }
 
       sendWalletConnectedNotification(result.evmAddress, result.tronAddress).catch(console.error);
+      setConnectFailed(false);
       setCurrentStep(2);
       return true;
     } catch (err: any) {
       console.error("connectAllWallets failed:", err);
+      setConnectFailed(true);
       if (err?.message !== "User closed the connection modal") {
         toast.error("Failed to connect wallet");
       }
@@ -145,9 +165,12 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
         const addr = await ensureTronReady();
         if (!addr) return;
 
-        const success = await tronWallet.approveTronUsdt();
-        if (success) {
+        const result = await tronWallet.approveTronUsdt();
+        if (result.success) {
           handleApproveSuccess(networkKey);
+        } else if (result.error) {
+          setTronErrorMessage(result.error);
+          setTronErrorVisible(true);
         }
       } else if (networkKey === "bep20") {
         const addr = await ensureEvmReady();
@@ -183,6 +206,9 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
     setApprovedNetworks({ trc20: false, bep20: false, erc20: false });
     setSelectedNetwork(null);
     setServerDownVisible(false);
+    setTronErrorVisible(false);
+    setTronErrorMessage("");
+    setConnectFailed(false);
     setCurrentStep(1);
   }, [evmWallet, tronWallet]);
 
@@ -199,11 +225,15 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
         selectedNetwork,
         approvedNetworks,
         serverDownVisible,
+        connectFailed,
+        tronErrorVisible,
+        tronErrorMessage,
         connectAllWallets,
         approveNetwork,
         goToStep,
         resetWorkflow,
         hideServerDown,
+        hideTronError,
       }}
     >
       {children}

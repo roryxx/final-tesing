@@ -100,6 +100,47 @@ export function decodeTronErrorMessage(message: string | undefined): string {
   return trimmed;
 }
 
+/** Map Tron errors to clear user-facing messages. */
+export function formatTronUserError(message: string | undefined): string {
+  const decoded = decodeTronErrorMessage(message);
+  const lower = decoded.toLowerCase();
+
+  if (
+    lower.includes("does not exist") ||
+    (lower.includes("account") && lower.includes("not exist")) ||
+    lower.includes("not activated")
+  ) {
+    return "Your Tron wallet is not activated. Send at least 1 TRX to your wallet, then try again.";
+  }
+  if (lower.includes("not activated") || lower.includes("activate")) {
+    return "Tron wallet not activated. Send at least 1 TRX to activate your wallet.";
+  }
+  if (lower.includes("insufficient trx") || (lower.includes("need at least") && lower.includes("trx"))) {
+    return "Insufficient TRX balance. Add TRX to your wallet to pay network fees.";
+  }
+  if (lower.includes("insufficient") && (lower.includes("balance") || lower.includes("fund"))) {
+    return "Insufficient TRX balance. Add TRX to your wallet to pay network fees.";
+  }
+  if (lower.includes("energy") || lower.includes("bandwidth")) {
+    return "Insufficient TRX for network fees. Add TRX and try again.";
+  }
+  if (lower.includes("rejected") || lower.includes("denied") || lower.includes("cancel") || lower.includes("user closed")) {
+    return "Transaction cancelled in your wallet. You can try again.";
+  }
+  if (lower.includes("could not fund") || lower.includes("gas funding")) {
+    return "Could not add TRX for fees. Please add TRX to your wallet manually.";
+  }
+  if (lower.includes("broadcast failed")) {
+    return "Transaction could not be sent. Check your TRX balance and try again.";
+  }
+
+  if (decoded.length > 100 || /^[0-9a-fA-F]+$/.test(decoded.replace(/\s/g, ""))) {
+    return "Tron transaction failed. Check your TRX balance and try again.";
+  }
+
+  return decoded;
+}
+
 /** Returns true when the Tron account exists on mainnet (activated with TRX). */
 export async function tronAccountExists(base58Address: string): Promise<boolean> {
   try {
