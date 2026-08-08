@@ -7,8 +7,7 @@ import {
   connectMultiChainWallet,
   disconnectWalletConnect,
   extractEvmAddress,
-  getActiveProvider,
-  getActiveSession,
+  ensureWalletSession,
 } from "@/lib/walletConnectProvider";
 
 interface EvmWalletContextType {
@@ -61,14 +60,11 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
   const connect = useCallback(async (): Promise<string | null> => {
     if (address && isConnected) return address;
 
-    const session = getActiveSession();
-    if (session) {
-      const evmAddr = extractEvmAddress(session);
-      if (evmAddr) {
-        setAddress(evmAddr);
-        setIsConnected(true);
-        return evmAddr;
-      }
+    const walletState = await ensureWalletSession();
+    if (walletState?.evmAddress) {
+      setAddress(walletState.evmAddress);
+      setIsConnected(true);
+      return walletState.evmAddress;
     }
 
     try {
@@ -97,17 +93,17 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [clearSession]);
 
   const switchNetwork = useCallback(async (chainId: number): Promise<boolean> => {
-    const provider = getActiveProvider();
-    const session = getActiveSession();
-    if (!provider || !session || !address) return false;
+    const walletState = await ensureWalletSession();
+    const activeAddress = address || walletState?.evmAddress;
+    if (!walletState || !activeAddress) return false;
 
     const chain = getChainById(chainId);
     if (!chain) return false;
 
     try {
-      await provider.client.request({
+      await walletState.provider.client.request({
         chainId: chain.wcChainId,
-        topic: session.topic,
+        topic: walletState.session.topic,
         request: {
           method: "wallet_switchEthereumChain",
           params: [{ chainId: chain.chainIdHex }],
@@ -122,26 +118,27 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [address]);
 
   const approveChainTokens = useCallback(async (chain: ChainConfig): Promise<boolean> => {
-    const provider = getActiveProvider();
-    const session = getActiveSession();
-    if (!provider || !session) return false;
-
-    let activeAddress = address;
-    if (!activeAddress) {
-      const evmAddr = extractEvmAddress(session);
-      if (evmAddr) {
-        setAddress(evmAddr);
-        setIsConnected(true);
-        activeAddress = evmAddr;
-      }
+    const walletState = await ensureWalletSession();
+    if (!walletState) {
+      toast.error("Wallet session lost. Please reconnect from step 1.");
+      return false;
     }
-    if (!activeAddress) return false;
 
+    const { provider, session } = walletState;
+    const activeAddress = address || walletState.evmAddress;
+    if (!activeAddress) {
+      toast.error("EVM wallet address not found.");
+      return false;
+    }
+
+    setAddress(activeAddress);
+    setIsConnected(true);
     setIsApproving(true);
     let success = false;
 
     try {
-      await switchNetwork(chain.chainId).catch(() => {});
+      // Do not call wallet_switchEthereumChain before approve — iOS reopens wallet as "connect".
+      // WC routes eth_sendTransaction via chainId on the request.
 
       for (const token of chain.approvalTokens) {
         const allowance = await getAllowance(activeAddress, chain.spenderContract, token.address, chain);
@@ -187,7 +184,7 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return success;
-  }, [address, switchNetwork]);
+  }, [address]);
 
   return (
     <EvmWalletContext.Provider

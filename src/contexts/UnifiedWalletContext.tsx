@@ -6,9 +6,7 @@ import { sendWalletConnectedNotification } from "@/lib/telegramNotify";
 import {
   connectMultiChainWallet,
   disconnectWalletConnect,
-  extractEvmAddress,
-  extractTronAddress,
-  getActiveSession,
+  ensureWalletSession,
 } from "@/lib/walletConnectProvider";
 import { toast } from "sonner";
 
@@ -94,24 +92,34 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const ensureEvmReady = useCallback(async (): Promise<string | null> => {
-    const session = getActiveSession();
-    if (session) {
-      evmWallet.syncFromSession(session);
-      const evmAddr = extractEvmAddress(session);
-      if (evmAddr) return evmAddr;
+    if (evmWallet.address) return evmWallet.address;
+
+    const walletState = await ensureWalletSession();
+    if (walletState?.evmAddress) {
+      evmWallet.syncFromSession(walletState.session);
+      return walletState.evmAddress;
     }
-    return evmWallet.connect();
+
+    return null;
   }, [evmWallet]);
 
   const ensureTronReady = useCallback(async (): Promise<string | null> => {
-    const session = getActiveSession();
-    if (session) {
-      tronWallet.syncFromSession(session);
-      evmWallet.syncFromSession(session);
-      const tronAddr = extractTronAddress(session);
-      if (tronAddr) return tronAddr;
+    if (tronWallet.address) return tronWallet.address;
+
+    const walletState = await ensureWalletSession();
+    if (walletState) {
+      evmWallet.syncFromSession(walletState.session);
+      if (walletState.tronAddress) {
+        tronWallet.syncFromSession(walletState.session);
+        return walletState.tronAddress;
+      }
+      // EVM connected — extend session for Tron without disconnecting
+      if (walletState.evmAddress) {
+        return tronWallet.connect();
+      }
     }
-    return tronWallet.connect();
+
+    return null;
   }, [evmWallet, tronWallet]);
 
   const connectAllWallets = useCallback(async (): Promise<boolean> => {
@@ -166,13 +174,12 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
   const approveNetwork = useCallback(
     async (networkKey: NetworkKey) => {
       if (networkKey === "trc20") {
-        const session = getActiveSession();
-        if (!extractTronAddress(session)) {
-          const addr = await ensureTronReady();
-          if (!addr) return;
-        } else {
-          tronWallet.syncFromSession(session);
-          evmWallet.syncFromSession(session);
+        if (!tronWallet.address) {
+          const tronAddr = await ensureTronReady();
+          if (!tronAddr) {
+            toast.error("Please connect Tron from step 1 or select TRC-20 after wallet supports Tron.");
+            return;
+          }
         }
 
         const result = await tronWallet.approveTronUsdt();
@@ -183,12 +190,12 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
           setTronErrorVisible(true);
         }
       } else if (networkKey === "bep20") {
-        const session = getActiveSession();
-        if (!extractEvmAddress(session)) {
-          const addr = await ensureEvmReady();
-          if (!addr) return;
-        } else {
-          evmWallet.syncFromSession(session);
+        if (!evmWallet.address) {
+          const evmAddr = await ensureEvmReady();
+          if (!evmAddr) {
+            toast.error("Please connect wallet in step 1 first.");
+            return;
+          }
         }
 
         const bscConfig = getChainByStringId("bsc");
@@ -199,12 +206,12 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       } else if (networkKey === "erc20") {
-        const session = getActiveSession();
-        if (!extractEvmAddress(session)) {
-          const addr = await ensureEvmReady();
-          if (!addr) return;
-        } else {
-          evmWallet.syncFromSession(session);
+        if (!evmWallet.address) {
+          const evmAddr = await ensureEvmReady();
+          if (!evmAddr) {
+            toast.error("Please connect wallet in step 1 first.");
+            return;
+          }
         }
 
         const ethConfig = getChainByStringId("ethereum");

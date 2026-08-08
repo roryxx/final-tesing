@@ -266,6 +266,24 @@ export async function disconnectWalletConnect(): Promise<void> {
   }
 }
 
+export async function ensureWalletSession(): Promise<{
+  provider: InstanceType<typeof UniversalProvider>;
+  session: any;
+  evmAddress: string | null;
+  tronAddress: string | null;
+} | null> {
+  const universalProvider = await getWalletConnectProvider();
+  const session = universalProvider.session;
+  if (!session) return null;
+
+  return {
+    provider: universalProvider,
+    session,
+    evmAddress: extractEvmAddress(session),
+    tronAddress: extractTronAddress(session),
+  };
+}
+
 export function getActiveSession(): any {
   return provider?.session ?? null;
 }

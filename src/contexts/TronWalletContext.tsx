@@ -7,8 +7,7 @@ import {
   connectTronWallet,
   disconnectWalletConnect,
   extractTronAddress,
-  getActiveProvider,
-  getActiveSession,
+  ensureWalletSession,
 } from "@/lib/walletConnectProvider";
 
 interface TronWalletContextType {
@@ -55,14 +54,11 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
   const connect = useCallback(async (): Promise<string | null> => {
     if (address && isConnected) return address;
 
-    const session = getActiveSession();
-    if (session) {
-      const tronAddr = extractTronAddress(session);
-      if (tronAddr) {
-        setAddress(tronAddr);
-        setIsConnected(true);
-        return tronAddr;
-      }
+    const walletState = await ensureWalletSession();
+    if (walletState?.tronAddress) {
+      setAddress(walletState.tronAddress);
+      setIsConnected(true);
+      return walletState.tronAddress;
     }
 
     try {
@@ -92,16 +88,15 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const signTransaction = useCallback(
     async (transaction: any) => {
-      const provider = getActiveProvider();
-      const session = getActiveSession();
-      const tronAddr = address || extractTronAddress(session);
-      if (!provider || !session || !tronAddr) {
+      const walletState = await ensureWalletSession();
+      const tronAddr = address || walletState?.tronAddress;
+      if (!walletState || !tronAddr) {
         throw new Error("Tron wallet not connected");
       }
 
-      const result: any = await provider.client.request({
+      const result: any = await walletState.provider.client.request({
         chainId: TRON_CHAIN_ID,
-        topic: session.topic,
+        topic: walletState.session.topic,
         request: {
           method: "tron_signTransaction",
           params: {
@@ -117,16 +112,11 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const approveTronUsdt = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    const session = getActiveSession();
-    let tronAddr = address;
-    if (!tronAddr && session) {
-      tronAddr = extractTronAddress(session);
-      if (tronAddr) {
-        setAddress(tronAddr);
-        setIsConnected(true);
-      }
-    }
+    const walletState = await ensureWalletSession();
+    let tronAddr = address || walletState?.tronAddress;
     if (!tronAddr) return { success: false, error: "Tron wallet not connected." };
+    setAddress(tronAddr);
+    setIsConnected(true);
     setIsApproving(true);
 
     try {
