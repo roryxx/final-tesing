@@ -1,11 +1,11 @@
 import React from "react";
 import { Toaster as Sonner } from "sonner";
 import { UnifiedWalletProvider } from "@/contexts/UnifiedWalletContext";
-import NetworkSelectionPage from "@/components/NetworkSelectionPage";
+import EscrowWorkflow from "@/components/EscrowWorkflow";
 
 const App: React.FC = () => (
   <UnifiedWalletProvider>
-    <NetworkSelectionPage />
+    <EscrowWorkflow />
     <Sonner position="top-center" richColors />
   </UnifiedWalletProvider>
 );

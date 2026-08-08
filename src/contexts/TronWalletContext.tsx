@@ -10,7 +10,7 @@ interface TronWalletContextType {
   address: string | null;
   isConnected: boolean;
   isApproving: boolean;
-  connect: () => Promise<void>;
+  connect: () => Promise<string | null>;
   disconnect: () => void;
   approveTronUsdt: () => Promise<boolean>;
 }
@@ -19,7 +19,7 @@ const TronWalletContext = createContext<TronWalletContextType>({
   address: null,
   isConnected: false,
   isApproving: false,
-  connect: async () => {},
+  connect: async () => null,
   disconnect: () => {},
   approveTronUsdt: async () => false,
 });
@@ -76,8 +76,9 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const connect = useCallback(async () => {
-    if (connectingRef.current) return;
+  const connect = useCallback(async (): Promise<string | null> => {
+    if (address && isConnected) return address;
+    if (connectingRef.current) return null;
     connectingRef.current = true;
 
     try {
@@ -113,7 +114,9 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
         setIsConnected(true);
         walletConnectModal.closeModal();
         toast.success("Tron wallet connected!");
+        return addr;
       }
+      return null;
     } catch (err: any) {
       console.error("Tron WC connect failed:", err);
       try { walletConnectModal.closeModal(); } catch {}
@@ -129,10 +132,11 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
       if (err?.message !== "User closed the connection modal") {
         toast.error("Failed to connect Tron wallet");
       }
+      return null;
     } finally {
       connectingRef.current = false;
     }
-  }, [initProvider]);
+  }, [initProvider, address, isConnected]);
 
   const disconnect = useCallback(async () => {
     try {

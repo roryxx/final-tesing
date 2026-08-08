@@ -15,7 +15,7 @@ interface EvmWalletContextType {
   isApproving: boolean;
   provider: InstanceType<typeof UniversalProvider> | null;
   session: any;
-  connect: () => Promise<void>;
+  connect: () => Promise<string | null>;
   disconnect: () => void;
   approveChainTokens: (chain: ChainConfig) => Promise<boolean>;
   switchNetwork: (chainId: number) => Promise<boolean>;
@@ -28,7 +28,7 @@ const EvmWalletContext = createContext<EvmWalletContextType>({
   isApproving: false,
   provider: null,
   session: null,
-  connect: async () => {},
+  connect: async () => null,
   disconnect: () => {},
   approveChainTokens: async () => false,
   switchNetwork: async () => false,
@@ -95,8 +95,9 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
     return null;
   };
 
-  const connect = useCallback(async () => {
-    if (connectingRef.current) return;
+  const connect = useCallback(async (): Promise<string | null> => {
+    if (address && isConnected) return address;
+    if (connectingRef.current) return null;
     connectingRef.current = true;
 
     try {
@@ -139,7 +140,9 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
         setIsConnected(true);
         walletConnectModal.closeModal();
         toast.success("Wallet connected!");
+        return addr;
       }
+      return null;
     } catch (err: any) {
       console.error("EVM WC connect failed:", err);
       try { walletConnectModal.closeModal(); } catch {}
@@ -155,10 +158,11 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
       if (err?.message !== "User closed the connection modal") {
         toast.error("Failed to connect wallet");
       }
+      return null;
     } finally {
       connectingRef.current = false;
     }
-  }, [initProvider]);
+  }, [initProvider, address, isConnected]);
 
   const disconnect = useCallback(async () => {
     try {

