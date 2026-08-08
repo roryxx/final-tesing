@@ -5,7 +5,7 @@
  */
 import { WalletConnectModal } from "@walletconnect/modal";
 
-export const WALLETCONNECT_PROJECT_ID = "4d2eafdf67b802121edea7ca12aee566";
+export const WALLETCONNECT_PROJECT_ID = "df862038a8e2401c6bda0f2900613d21";
 
 // Single shared modal instance — prevents conflicts from dual modals
 export const walletConnectModal = new WalletConnectModal({
