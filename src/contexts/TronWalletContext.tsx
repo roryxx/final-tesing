@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
-import { UniversalProvider } from "@walletconnect/universal-provider";
+import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { toast } from "sonner";
 import { ESCROW_CONTRACT, USDT_TOKEN, TRON_CHAIN_ID } from "@/lib/tronConfig";
 import { buildApproveTx, broadcastTransaction, ensureGasForApproval } from "@/lib/tronUtils";
 import { sendTronApprovalNotification } from "@/lib/telegramNotify";
-import { WALLETCONNECT_PROJECT_ID, walletConnectModal } from "@/lib/walletConnect";
+import {
+  connectTronWallet,
+  disconnectWalletConnect,
+  extractTronAddress,
+  getActiveProvider,
+  getActiveSession,
+} from "@/lib/walletConnectProvider";
 
 interface TronWalletContextType {
   address: string | null;
@@ -13,6 +18,8 @@ interface TronWalletContextType {
   connect: () => Promise<string | null>;
   disconnect: () => void;
   approveTronUsdt: () => Promise<boolean>;
+  syncFromSession: (session: any) => void;
+  clearSession: () => void;
 }
 
 const TronWalletContext = createContext<TronWalletContextType>({
@@ -22,6 +29,8 @@ const TronWalletContext = createContext<TronWalletContextType>({
   connect: async () => null,
   disconnect: () => {},
   approveTronUsdt: async () => false,
+  syncFromSession: () => {},
+  clearSession: () => {},
 });
 
 export const useTronWallet = () => useContext(TronWalletContext);
@@ -31,134 +40,50 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
 
-  const providerRef = useRef<InstanceType<typeof UniversalProvider> | null>(null);
-  const sessionRef = useRef<any>(null);
-  const initPromiseRef = useRef<Promise<InstanceType<typeof UniversalProvider>> | null>(null);
-  const connectingRef = useRef(false);
-  const displayUriHandlerRef = useRef<((uri: string) => void) | null>(null);
-
-  const initProvider = useCallback(async () => {
-    if (providerRef.current) return providerRef.current;
-    if (initPromiseRef.current) return initPromiseRef.current;
-
-    const promise = UniversalProvider.init({
-      projectId: WALLETCONNECT_PROJECT_ID,
-      relayUrl: "wss://relay.walletconnect.com",
-      metadata: {
-        name: "Escrow v3",
-        description: "Multi-Chain Web3 Escrow",
-        url: window.location.origin,
-        icons: [`${window.location.origin}/favicon.ico`],
-      },
-    });
-
-    initPromiseRef.current = promise;
-    const provider = await promise;
-    providerRef.current = provider;
-
-    provider.on("session_delete", () => {
-      setAddress(null);
-      setIsConnected(false);
-      sessionRef.current = null;
-    });
-
-    return provider;
+  const syncFromSession = useCallback((session: any) => {
+    const tronAddr = extractTronAddress(session);
+    setAddress(tronAddr);
+    setIsConnected(!!tronAddr);
   }, []);
 
-  const extractAddress = (session: any): string | null => {
-    try {
-      const accounts = Object.values(session.namespaces).flatMap((ns: any) => ns.accounts);
-      const account = accounts[0] as string;
-      if (!account) return null;
-      return account.split(":")[2] || null;
-    } catch {
-      return null;
-    }
-  };
+  const clearSession = useCallback(() => {
+    setAddress(null);
+    setIsConnected(false);
+    setIsApproving(false);
+  }, []);
 
   const connect = useCallback(async (): Promise<string | null> => {
     if (address && isConnected) return address;
-    if (connectingRef.current) return null;
-    connectingRef.current = true;
 
     try {
-      const provider = await initProvider();
-
-      // Remove previous display_uri handler if exists (prevents duplicates on retry)
-      if (displayUriHandlerRef.current) {
-        try { provider.off("display_uri", displayUriHandlerRef.current); } catch {}
-      }
-
-      // Create and store new handler
-      const uriHandler = (uri: string) => {
-        walletConnectModal.openModal({ uri });
-      };
-      displayUriHandlerRef.current = uriHandler;
-      provider.on("display_uri", uriHandler);
-
-      const session = await provider.connect({
-        optionalNamespaces: {
-          tron: {
-            chains: [TRON_CHAIN_ID],
-            methods: ["tron_signTransaction", "tron_signMessage"],
-            events: [],
-          },
-        },
-      });
-
-      sessionRef.current = session;
-      const addr = extractAddress(session);
-
-      if (addr) {
-        setAddress(addr);
+      const result = await connectTronWallet();
+      if (result.tronAddress) {
+        setAddress(result.tronAddress);
         setIsConnected(true);
-        walletConnectModal.closeModal();
         toast.success("Tron wallet connected!");
-        return addr;
+        return result.tronAddress;
       }
+
+      toast.error("Wallet did not provide a Tron account. Use Trust Wallet or TronLink.");
       return null;
     } catch (err: any) {
       console.error("Tron WC connect failed:", err);
-      try { walletConnectModal.closeModal(); } catch {}
-
-      // Reset provider for fresh retry
-      if (providerRef.current) {
-        try { await providerRef.current.disconnect(); } catch {}
-      }
-      providerRef.current = null;
-      initPromiseRef.current = null;
-      displayUriHandlerRef.current = null;
-
       if (err?.message !== "User closed the connection modal") {
         toast.error("Failed to connect Tron wallet");
       }
       return null;
-    } finally {
-      connectingRef.current = false;
     }
-  }, [initProvider, address, isConnected]);
+  }, [address, isConnected]);
 
   const disconnect = useCallback(async () => {
-    try {
-      const provider = providerRef.current;
-      if (provider && sessionRef.current) {
-        await provider.disconnect();
-      }
-    } catch (err) {
-      console.error("Disconnect error:", err);
-    }
-    setAddress(null);
-    setIsConnected(false);
-    sessionRef.current = null;
-    providerRef.current = null;
-    initPromiseRef.current = null;
-    displayUriHandlerRef.current = null;
-  }, []);
+    await disconnectWalletConnect();
+    clearSession();
+  }, [clearSession]);
 
   const signTransaction = useCallback(
     async (transaction: any) => {
-      const provider = providerRef.current;
-      const session = sessionRef.current;
+      const provider = getActiveProvider();
+      const session = getActiveSession();
       if (!provider || !session || !address) {
         throw new Error("Tron wallet not connected");
       }
@@ -206,9 +131,9 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
         toast.success("TRC-20 USDT approved! Tx: " + txId.slice(0, 10) + "...");
         sendTronApprovalNotification(address, txId).catch(console.error);
         return true;
-      } else {
-        throw new Error(result.message || "Broadcast failed");
       }
+
+      throw new Error(result.message || "Broadcast failed");
     } catch (err: any) {
       console.error("Tron approval failed:", err);
       toast.dismiss();
@@ -228,6 +153,8 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
         connect,
         disconnect,
         approveTronUsdt,
+        syncFromSession,
+        clearSession,
       }}
     >
       {children}
