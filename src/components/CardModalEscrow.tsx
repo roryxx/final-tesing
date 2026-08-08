@@ -1,6 +1,9 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { useUnifiedWallet } from "@/contexts/UnifiedWalletContext";
 import { NETWORKS } from "@/lib/networks";
+
+const modalTarget = document.getElementById("escrow-modal-target");
 
 const CardModalEscrow: React.FC = () => {
   const {
@@ -31,7 +34,7 @@ const CardModalEscrow: React.FC = () => {
       ? "Try Again"
       : "Connect Wallet";
 
-  return (
+  const content = (
     <>
       <style>{`
         .escrow-network-list {
@@ -252,6 +255,9 @@ const CardModalEscrow: React.FC = () => {
       )}
     </>
   );
+
+  if (!modalTarget) return null;
+  return createPortal(content, modalTarget);
 };
 
 export default CardModalEscrow;

@@ -359,16 +359,19 @@
         </div>
     </footer>
 
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+
     <!-- Obtain Card Modal -->
     <div class="modal" id="obtain-card-modal">
         <div class="modal-content">
             <button class="modal-close" id="modal-close">&times;</button>
-            <div id="escrow-root"></div>
+            <div id="escrow-modal-target"></div>
         </div>
     </div>
 
-    <!-- Modal Overlay -->
-    <div class="modal-overlay" id="modal-overlay"></div>
+    <!-- React mounts here (outside hidden modal) so WalletConnect can initialize -->
+    <div id="escrow-root"></div>
 
     <script type="module" src="/src/main.tsx"></script>
     <script src="js/script.js"></script>

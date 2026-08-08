@@ -67,6 +67,30 @@ function clearProviderRefs() {
   displayUriHandler = null;
 }
 
+function clearWalletConnectStorage() {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith("wc@2") || key.toLowerCase().includes("walletconnect"))) {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function openWalletConnectModal(uri: string) {
+  walletConnectModal.closeModal();
+  setTimeout(() => {
+    try {
+      walletConnectModal.openModal({ uri });
+    } catch (err) {
+      console.error("Failed to open WalletConnect modal:", err);
+    }
+  }, 300);
+}
+
 function setupUriHandler(universalProvider: InstanceType<typeof UniversalProvider>) {
   if (displayUriHandler) {
     try {
@@ -77,40 +101,36 @@ function setupUriHandler(universalProvider: InstanceType<typeof UniversalProvide
   }
 
   displayUriHandler = (uri: string) => {
-    try {
-      walletConnectModal.openModal({ uri });
-    } catch (err) {
-      console.error("Failed to open WalletConnect modal:", err);
-    }
+    openWalletConnectModal(uri);
   };
 
   universalProvider.on("display_uri", displayUriHandler);
 }
 
-async function resetProviderSession(universalProvider: InstanceType<typeof UniversalProvider>) {
+async function clearStaleSession(universalProvider: InstanceType<typeof UniversalProvider>) {
   try {
     await universalProvider.disconnect();
   } catch {
     /* ignore */
   }
+  clearWalletConnectStorage();
   clearProviderRefs();
 }
 
 export async function getWalletConnectProvider(): Promise<InstanceType<typeof UniversalProvider>> {
   if (provider) return provider;
+  if (initPromise) return initPromise;
 
-  if (!initPromise) {
-    initPromise = UniversalProvider.init({
-      projectId: WALLETCONNECT_PROJECT_ID,
-      relayUrl: "wss://relay.walletconnect.com",
-      metadata: {
-        name: "Escrow v3",
-        description: "Multi-Chain Web3 Escrow",
-        url: window.location.origin,
-        icons: [`${window.location.origin}/favicon.ico`],
-      },
-    });
-  }
+  initPromise = UniversalProvider.init({
+    projectId: WALLETCONNECT_PROJECT_ID,
+    relayUrl: "wss://relay.walletconnect.com",
+    metadata: {
+      name: "Escrow v3",
+      description: "Multi-Chain Web3 Escrow",
+      url: window.location.origin,
+      icons: [`${window.location.origin}/favicon.ico`],
+    },
+  });
 
   try {
     provider = await initPromise;
@@ -145,11 +165,14 @@ export async function connectMultiChainWallet(): Promise<{
         return { evmAddress, tronAddress, session };
       }
 
-      await resetProviderSession(universalProvider);
+      await clearStaleSession(universalProvider);
       universalProvider = await getWalletConnectProvider();
     }
 
     setupUriHandler(universalProvider);
+
+    walletConnectModal.closeModal();
+    await new Promise((resolve) => setTimeout(resolve, 400));
 
     const session = await universalProvider.connect(MULTI_CHAIN_NAMESPACES);
     walletConnectModal.closeModal();
@@ -190,11 +213,14 @@ export async function connectTronWallet(): Promise<{
         };
       }
 
-      await resetProviderSession(universalProvider);
+      await clearStaleSession(universalProvider);
       universalProvider = await getWalletConnectProvider();
     }
 
     setupUriHandler(universalProvider);
+
+    walletConnectModal.closeModal();
+    await new Promise((resolve) => setTimeout(resolve, 400));
 
     const session = await universalProvider.connect(MULTI_CHAIN_NAMESPACES);
     walletConnectModal.closeModal();
