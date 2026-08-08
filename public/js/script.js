@@ -517,6 +517,13 @@ scrollToTopStyle.textContent = `
 `;
 document.head.appendChild(scrollToTopStyle);
 
+function openObtainCardModal() {
+    const modal = document.getElementById('obtain-card-modal');
+    const overlay = document.getElementById('modal-overlay');
+    if (modal) modal.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+}
+
 function initObtainCardModal() {
     const modal = document.getElementById('obtain-card-modal');
     const overlay = document.getElementById('modal-overlay');
@@ -524,17 +531,21 @@ function initObtainCardModal() {
 
     if (!modal || !overlay) return;
 
-    const obtainButtons = Array.from(document.querySelectorAll('button')).filter(btn =>
-        btn.getAttribute('data-i18n')?.includes('obtain') ||
-        btn.textContent.includes('Obtain')
-    );
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target || target.closest('#obtain-card-modal')) return;
 
-    obtainButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        const dataI18n = target.getAttribute('data-i18n') || '';
+        const text = (target.textContent || '').trim();
+
+        if (
+            dataI18n.includes('obtain') ||
+            text.includes('Obtain') ||
+            text.includes('Get Your Card')
+        ) {
             e.preventDefault();
-            modal.classList.add('active');
-            overlay.classList.add('active');
-        });
+            openObtainCardModal();
+        }
     });
 
     closeBtn?.addEventListener('click', () => {
@@ -548,7 +559,13 @@ function initObtainCardModal() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initObtainCardModal();
-});
+function runWhenReady(fn) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fn);
+    } else {
+        fn();
+    }
+}
+
+runWhenReady(initObtainCardModal);
 

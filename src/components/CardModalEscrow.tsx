@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useUnifiedWallet } from "@/contexts/UnifiedWalletContext";
 import { NETWORKS } from "@/lib/networks";
 
-const modalTarget = document.getElementById("escrow-modal-target");
-
 const CardModalEscrow: React.FC = () => {
+  const [modalTarget, setModalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setModalTarget(document.getElementById("escrow-modal-target"));
+  }, []);
   const {
     isConnecting,
     isApproving,
