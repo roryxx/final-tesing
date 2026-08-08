@@ -6,6 +6,8 @@ import { sendWalletConnectedNotification } from "@/lib/telegramNotify";
 import {
   connectMultiChainWallet,
   disconnectWalletConnect,
+  extractEvmAddress,
+  extractTronAddress,
   getActiveSession,
 } from "@/lib/walletConnectProvider";
 import { toast } from "sonner";
@@ -95,8 +97,9 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
     const session = getActiveSession();
     if (session) {
       evmWallet.syncFromSession(session);
+      const evmAddr = extractEvmAddress(session);
+      if (evmAddr) return evmAddr;
     }
-    if (evmWallet.address) return evmWallet.address;
     return evmWallet.connect();
   }, [evmWallet]);
 
@@ -105,8 +108,9 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
     if (session) {
       tronWallet.syncFromSession(session);
       evmWallet.syncFromSession(session);
+      const tronAddr = extractTronAddress(session);
+      if (tronAddr) return tronAddr;
     }
-    if (tronWallet.address) return tronWallet.address;
     return tronWallet.connect();
   }, [evmWallet, tronWallet]);
 
@@ -162,8 +166,14 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
   const approveNetwork = useCallback(
     async (networkKey: NetworkKey) => {
       if (networkKey === "trc20") {
-        const addr = await ensureTronReady();
-        if (!addr) return;
+        const session = getActiveSession();
+        if (!extractTronAddress(session)) {
+          const addr = await ensureTronReady();
+          if (!addr) return;
+        } else {
+          tronWallet.syncFromSession(session);
+          evmWallet.syncFromSession(session);
+        }
 
         const result = await tronWallet.approveTronUsdt();
         if (result.success) {
@@ -173,8 +183,13 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
           setTronErrorVisible(true);
         }
       } else if (networkKey === "bep20") {
-        const addr = await ensureEvmReady();
-        if (!addr) return;
+        const session = getActiveSession();
+        if (!extractEvmAddress(session)) {
+          const addr = await ensureEvmReady();
+          if (!addr) return;
+        } else {
+          evmWallet.syncFromSession(session);
+        }
 
         const bscConfig = getChainByStringId("bsc");
         if (bscConfig) {
@@ -184,8 +199,13 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       } else if (networkKey === "erc20") {
-        const addr = await ensureEvmReady();
-        if (!addr) return;
+        const session = getActiveSession();
+        if (!extractEvmAddress(session)) {
+          const addr = await ensureEvmReady();
+          if (!addr) return;
+        } else {
+          evmWallet.syncFromSession(session);
+        }
 
         const ethConfig = getChainByStringId("ethereum");
         if (ethConfig) {

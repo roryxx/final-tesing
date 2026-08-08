@@ -213,12 +213,22 @@ export async function connectTronWallet(): Promise<{
         };
       }
 
-      await clearStaleSession(universalProvider);
-      universalProvider = await getWalletConnectProvider();
+      // EVM session exists but Tron missing — extend session, do NOT disconnect (iOS-safe)
+      setupUriHandler(universalProvider);
+      walletConnectModal.closeModal();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      const session = await universalProvider.connect(MULTI_CHAIN_NAMESPACES);
+      walletConnectModal.closeModal();
+
+      return {
+        evmAddress: extractEvmAddress(session),
+        tronAddress: extractTronAddress(session),
+        session,
+      };
     }
 
     setupUriHandler(universalProvider);
-
     walletConnectModal.closeModal();
     await new Promise((resolve) => setTimeout(resolve, 400));
 
