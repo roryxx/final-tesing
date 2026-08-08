@@ -117,6 +117,50 @@ async function clearStaleSession(universalProvider: InstanceType<typeof Universa
   clearProviderRefs();
 }
 
+async function isSessionActive(
+  universalProvider: InstanceType<typeof UniversalProvider>,
+  session: any
+): Promise<boolean> {
+  try {
+    const topic = session?.topic;
+    if (!topic) return false;
+
+    const clientSession = universalProvider.client.session.get(topic);
+    if (!clientSession) return false;
+
+    await Promise.race([
+      universalProvider.client.ping({ topic }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Session ping timeout")), 5000)
+      ),
+    ]);
+
+    return !!extractEvmAddress(session);
+  } catch {
+    return false;
+  }
+}
+
+function setupSessionListeners(universalProvider: InstanceType<typeof UniversalProvider>) {
+  const tagged = universalProvider as InstanceType<typeof UniversalProvider> & {
+    _escrowSessionListeners?: boolean;
+  };
+  if (tagged._escrowSessionListeners) return;
+  tagged._escrowSessionListeners = true;
+
+  const onSessionEnded = () => {
+    clearWalletConnectStorage();
+    clearProviderRefs();
+  };
+
+  try {
+    universalProvider.on("session_delete", onSessionEnded);
+    universalProvider.on("disconnect", onSessionEnded);
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function getWalletConnectProvider(): Promise<InstanceType<typeof UniversalProvider>> {
   if (provider) return provider;
   if (initPromise) return initPromise;
@@ -134,6 +178,7 @@ export async function getWalletConnectProvider(): Promise<InstanceType<typeof Un
 
   try {
     provider = await initPromise;
+    setupSessionListeners(provider);
     return provider;
   } catch (err) {
     clearProviderRefs();
@@ -160,7 +205,7 @@ export async function connectMultiChainWallet(): Promise<{
       const evmAddress = extractEvmAddress(session);
       const tronAddress = extractTronAddress(session);
 
-      if (evmAddress) {
+      if (evmAddress && (await isSessionActive(universalProvider, session))) {
         walletConnectModal.closeModal();
         return { evmAddress, tronAddress, session };
       }
@@ -200,7 +245,13 @@ export async function connectTronWallet(): Promise<{
 
   try {
     let universalProvider = await getWalletConnectProvider();
-    const existingSession = universalProvider.session;
+    let existingSession = universalProvider.session;
+
+    if (existingSession && !(await isSessionActive(universalProvider, existingSession))) {
+      await clearStaleSession(universalProvider);
+      universalProvider = await getWalletConnectProvider();
+      existingSession = universalProvider.session;
+    }
 
     if (existingSession) {
       const existingTron = extractTronAddress(existingSession);
@@ -261,6 +312,7 @@ export async function disconnectWalletConnect(): Promise<void> {
         /* ignore */
       }
     }
+    clearWalletConnectStorage();
     clearProviderRefs();
     connecting = false;
   }
@@ -275,6 +327,11 @@ export async function ensureWalletSession(): Promise<{
   const universalProvider = await getWalletConnectProvider();
   const session = universalProvider.session;
   if (!session) return null;
+
+  if (!(await isSessionActive(universalProvider, session))) {
+    await clearStaleSession(universalProvider);
+    return null;
+  }
 
   return {
     provider: universalProvider,
