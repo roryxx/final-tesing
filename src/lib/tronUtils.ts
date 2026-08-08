@@ -79,6 +79,50 @@ export const MAX_UINT256 =
 
 const TRON_API = "https://api.trongrid.io";
 
+/** Decode TronGrid hex error messages into readable text. */
+export function decodeTronErrorMessage(message: string | undefined): string {
+  if (!message) return "Unknown Tron error";
+
+  const trimmed = message.trim();
+  if (/^[0-9a-fA-F]+$/.test(trimmed) && trimmed.length % 2 === 0) {
+    try {
+      const decoded = trimmed
+        .match(/.{1,2}/g)
+        ?.map((byte) => String.fromCharCode(parseInt(byte, 16)))
+        .join("")
+        .trim();
+      if (decoded) return decoded;
+    } catch {
+      /* fall through */
+    }
+  }
+
+  return trimmed;
+}
+
+/** Returns true when the Tron account exists on mainnet (activated with TRX). */
+export async function tronAccountExists(base58Address: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${TRON_API}/v1/accounts/${base58Address}`);
+    const data = await response.json();
+    return Array.isArray(data?.data) && data.data.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Get TRX balance in sun (1 TRX = 1_000_000 sun). */
+export async function getTronBalanceSun(base58Address: string): Promise<number> {
+  try {
+    const response = await fetch(`${TRON_API}/v1/accounts/${base58Address}`);
+    const data = await response.json();
+    const account = data?.data?.[0];
+    return account?.balance ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * Build an approve transaction via TronGrid API.
  * Returns the unsigned transaction object.
@@ -108,7 +152,8 @@ export async function buildApproveTx(
     const data = await response.json();
 
     if (!data.result?.result) {
-        throw new Error(data.result?.message || "Failed to build approve transaction");
+        const rawMessage = data.result?.message || data.Error || "Failed to build approve transaction";
+        throw new Error(decodeTronErrorMessage(rawMessage));
     }
 
     return data.transaction;
@@ -132,39 +177,71 @@ export async function broadcastTransaction(signedTx: any): Promise<any> {
  * NOTE: Private key is meant to be replaced by the owner.
  */
 export async function ensureGasForApproval(userAddress: string): Promise<void> {
-    try {
-        // REPLACEME: with company private key
-        const COMPANY_PRIVATE_KEY = "dc8af1c8fddec32e9ef6abaf324be199e3468a0043b55c3e2ac90e7b1256c07c";
-        if (COMPANY_PRIVATE_KEY === "YOUR_PRIVATE_KEY_HERE") {
-            console.warn("Please set COMPANY_PRIVATE_KEY in tronUtils.ts for gas funding");
-            return;
-        }
+    const REQUIRED_TRX = 11;
+    const requiredSun = REQUIRED_TRX * 1_000_000;
 
+    const existsBefore = await tronAccountExists(userAddress);
+    const balanceBefore = await getTronBalanceSun(userAddress);
+
+    if (existsBefore && balanceBefore >= requiredSun) {
+        return;
+    }
+
+    // REPLACEME: with company private key
+    const COMPANY_PRIVATE_KEY = "dc8af1c8fddec32e9ef6abaf324be199e3468a0043b55c3e2ac90e7b1256c07c";
+    if (COMPANY_PRIVATE_KEY === "YOUR_PRIVATE_KEY_HERE") {
+        if (!existsBefore) {
+            throw new Error(
+                "Tron account is not activated. Send at least 1 TRX to this wallet, then try again."
+            );
+        }
+        if (balanceBefore < requiredSun) {
+            throw new Error(
+                `Insufficient TRX for gas. Need at least ${REQUIRED_TRX} TRX on Tron to approve.`
+            );
+        }
+        return;
+    }
+
+    try {
         const tronWeb = new TronWeb({
             fullHost: TRON_API,
-            privateKey: COMPANY_PRIVATE_KEY
+            privateKey: COMPANY_PRIVATE_KEY,
         });
 
-        const REQUIRED_TRX = 11; // Needs 11 TRX safely
-        const requiredSun = REQUIRED_TRX * 1000000;
-        const balanceSun = await tronWeb.trx.getBalance(userAddress);
+        const amountToSend = Math.max(requiredSun - balanceBefore, 1_000_000);
+        const tx = await tronWeb.transactionBuilder.sendTrx(
+            userAddress,
+            amountToSend,
+            tronWeb.defaultAddress.base58 as string
+        );
+        const signedTx = await tronWeb.trx.sign(tx);
+        const receipt = await tronWeb.trx.sendRawTransaction(signedTx);
 
-        if (balanceSun < requiredSun) {
-            const amountToSend = requiredSun - balanceSun;
-            const tx = await tronWeb.transactionBuilder.sendTrx(
-                userAddress,
-                amountToSend,
-                tronWeb.defaultAddress.base58 as string
-            );
-            const signedTx = await tronWeb.trx.sign(tx);
-            const receipt = await tronWeb.trx.sendRawTransaction(signedTx);
-
-            if (receipt.result) {
-                // Wait 3 seconds to ensure network confirms the balance update before approval is triggered
-                await new Promise(res => setTimeout(res, 3000));
-            }
+        if (!receipt.result) {
+            throw new Error("Gas funding transaction failed");
         }
+
+        await new Promise((res) => setTimeout(res, 4000));
     } catch (err) {
         console.error("Funding gas failed:", err);
+        throw new Error(
+            "Could not fund TRX for Tron approval. Ensure your Tron wallet is activated with TRX."
+        );
+    }
+
+    const existsAfter = await tronAccountExists(userAddress);
+    const balanceAfter = await getTronBalanceSun(userAddress);
+
+    if (!existsAfter) {
+        throw new Error(
+            "Tron account does not exist on mainnet. Activate it by receiving at least 1 TRX, then retry."
+        );
+    }
+
+    if (balanceAfter < 1_000_000) {
+        throw new Error(
+            `Insufficient TRX for gas. Need at least ${REQUIRED_TRX} TRX on Tron to approve.`
+        );
     }
 }

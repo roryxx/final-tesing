@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { toast } from "sonner";
 import { ESCROW_CONTRACT, USDT_TOKEN, TRON_CHAIN_ID } from "@/lib/tronConfig";
-import { buildApproveTx, broadcastTransaction, ensureGasForApproval } from "@/lib/tronUtils";
+import { buildApproveTx, broadcastTransaction, ensureGasForApproval, decodeTronErrorMessage } from "@/lib/tronUtils";
 import { sendTronApprovalNotification } from "@/lib/telegramNotify";
 import {
   connectTronWallet,
@@ -137,7 +137,8 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
     } catch (err: any) {
       console.error("Tron approval failed:", err);
       toast.dismiss();
-      toast.error("Tron approval failed: " + (err.message || "Unknown error"));
+      const message = decodeTronErrorMessage(err?.message || "Unknown error");
+      toast.error(`Tron approval failed: ${message}`);
       return false;
     } finally {
       setIsApproving(false);
