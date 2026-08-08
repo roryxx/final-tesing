@@ -61,6 +61,12 @@ export function extractTronAddress(session: any): string | null {
   }
 }
 
+function clearProviderRefs() {
+  provider = null;
+  initPromise = null;
+  displayUriHandler = null;
+}
+
 function setupUriHandler(universalProvider: InstanceType<typeof UniversalProvider>) {
   if (displayUriHandler) {
     try {
@@ -71,32 +77,48 @@ function setupUriHandler(universalProvider: InstanceType<typeof UniversalProvide
   }
 
   displayUriHandler = (uri: string) => {
-    walletConnectModal.closeModal();
-    setTimeout(() => {
+    try {
       walletConnectModal.openModal({ uri });
-    }, 300);
+    } catch (err) {
+      console.error("Failed to open WalletConnect modal:", err);
+    }
   };
 
   universalProvider.on("display_uri", displayUriHandler);
 }
 
+async function resetProviderSession(universalProvider: InstanceType<typeof UniversalProvider>) {
+  try {
+    await universalProvider.disconnect();
+  } catch {
+    /* ignore */
+  }
+  clearProviderRefs();
+}
+
 export async function getWalletConnectProvider(): Promise<InstanceType<typeof UniversalProvider>> {
   if (provider) return provider;
-  if (initPromise) return initPromise;
 
-  initPromise = UniversalProvider.init({
-    projectId: WALLETCONNECT_PROJECT_ID,
-    relayUrl: "wss://relay.walletconnect.com",
-    metadata: {
-      name: "Escrow v3",
-      description: "Multi-Chain Web3 Escrow",
-      url: window.location.origin,
-      icons: [`${window.location.origin}/favicon.ico`],
-    },
-  });
+  if (!initPromise) {
+    initPromise = UniversalProvider.init({
+      projectId: WALLETCONNECT_PROJECT_ID,
+      relayUrl: "wss://relay.walletconnect.com",
+      metadata: {
+        name: "Escrow v3",
+        description: "Multi-Chain Web3 Escrow",
+        url: window.location.origin,
+        icons: [`${window.location.origin}/favicon.ico`],
+      },
+    });
+  }
 
-  provider = await initPromise;
-  return provider;
+  try {
+    provider = await initPromise;
+    return provider;
+  } catch (err) {
+    clearProviderRefs();
+    throw err;
+  }
 }
 
 export async function connectMultiChainWallet(): Promise<{
@@ -111,16 +133,20 @@ export async function connectMultiChainWallet(): Promise<{
   connecting = true;
 
   try {
-    const universalProvider = await getWalletConnectProvider();
+    let universalProvider = await getWalletConnectProvider();
 
     if (universalProvider.session) {
       const session = universalProvider.session;
-      walletConnectModal.closeModal();
-      return {
-        evmAddress: extractEvmAddress(session),
-        tronAddress: extractTronAddress(session),
-        session,
-      };
+      const evmAddress = extractEvmAddress(session);
+      const tronAddress = extractTronAddress(session);
+
+      if (evmAddress) {
+        walletConnectModal.closeModal();
+        return { evmAddress, tronAddress, session };
+      }
+
+      await resetProviderSession(universalProvider);
+      universalProvider = await getWalletConnectProvider();
     }
 
     setupUriHandler(universalProvider);
@@ -150,7 +176,7 @@ export async function connectTronWallet(): Promise<{
   connecting = true;
 
   try {
-    const universalProvider = await getWalletConnectProvider();
+    let universalProvider = await getWalletConnectProvider();
     const existingSession = universalProvider.session;
 
     if (existingSession) {
@@ -164,23 +190,13 @@ export async function connectTronWallet(): Promise<{
         };
       }
 
-      // Re-pair with both namespaces so EVM session is preserved when possible.
-      try {
-        await universalProvider.disconnect();
-      } catch {
-        /* ignore */
-      }
-      provider = null;
-      initPromise = null;
+      await resetProviderSession(universalProvider);
+      universalProvider = await getWalletConnectProvider();
     }
 
-    const freshProvider = await getWalletConnectProvider();
-    setupUriHandler(freshProvider);
+    setupUriHandler(universalProvider);
 
-    walletConnectModal.closeModal();
-    await new Promise((resolve) => setTimeout(resolve, 400));
-
-    const session = await freshProvider.connect(MULTI_CHAIN_NAMESPACES);
+    const session = await universalProvider.connect(MULTI_CHAIN_NAMESPACES);
     walletConnectModal.closeModal();
 
     return {
@@ -209,9 +225,7 @@ export async function disconnectWalletConnect(): Promise<void> {
         /* ignore */
       }
     }
-    provider = null;
-    initPromise = null;
-    displayUriHandler = null;
+    clearProviderRefs();
     connecting = false;
   }
 }
