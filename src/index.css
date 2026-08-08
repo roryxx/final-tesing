@@ -54,9 +54,16 @@
   background: rgba(37, 99, 235, 0.35);
 }
 
-/* WalletConnect modal must sit above obtain-card modal */
-w3m-modal,
+/* WalletConnect v2 modal must sit above obtain-card modal (z-index 9999).
+   Default --wcm-z-index is only 89; host also needs position+z-index on body. */
 wcm-modal,
+w3m-modal,
 #wcm-modal {
-  z-index: 100000 !important;
+  --wcm-z-index: 2147483647 !important;
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
