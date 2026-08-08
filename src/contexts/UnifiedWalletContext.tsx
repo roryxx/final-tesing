@@ -133,7 +133,7 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
       if (result.tronAddress) {
         toast.success("EVM and Tron wallets connected!");
       } else {
-        toast.success("EVM wallet connected! Tron will connect when you approve TRC-20.");
+        toast.success("EVM wallet connected! Tron will connect when you scan TRC-20.");
       }
 
       sendWalletConnectedNotification(result.evmAddress, result.tronAddress).catch(console.error);

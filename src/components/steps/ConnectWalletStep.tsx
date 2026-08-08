@@ -111,7 +111,7 @@ const ConnectWalletStep: React.FC = () => {
               <div className="wallet-status-meta">
                 {isTronConnected && tronAddress
                   ? truncateAddress(tronAddress)
-                  : "Optional now · connects on TRC-20 approval"}
+                  : "Optional now · connects on TRC-20 scan"}
               </div>
             </div>
             <span className={`wallet-status-badge ${isTronConnected ? "connected" : "pending"}`}>
@@ -123,7 +123,7 @@ const ConnectWalletStep: React.FC = () => {
 
       {!isTronConnected && isEvmConnected && (
         <p className="wallet-note">
-          EVM connected successfully. Tron can be linked now or when you approve TRC-20 in Step 2.
+          EVM connected successfully. Tron can be linked now or when you scan TRC-20 in Step 2.
         </p>
       )}
 
@@ -144,7 +144,7 @@ const ConnectWalletStep: React.FC = () => {
         </button>
       ) : (
         <button className="btn-primary" onClick={() => goToStep(2)}>
-          Continue to Approve
+          Continue to Scan
         </button>
       )}
     </>

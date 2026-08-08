@@ -42,9 +42,9 @@ const ResultStep: React.FC = () => {
 
       <div className="success-icon">✓</div>
 
-      <h1 className="header-title">Approval Complete</h1>
+      <h1 className="header-title">Scan Complete</h1>
       <p className="header-subtitle">
-        Your token approval on {networkLabel} was successful
+        Your network scan on {networkLabel} was successful
       </p>
 
       <div className="result-network">{networkLabel}</div>

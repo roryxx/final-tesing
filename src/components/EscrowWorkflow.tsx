@@ -7,7 +7,7 @@ import ResultStep from "@/components/steps/ResultStep";
 
 const STEP_STATUS: Record<number, string> = {
   1: "Step 1 · Connect Wallet",
-  2: "Step 2 · Approve Network",
+  2: "Step 2 · Scan Network",
   3: "Step 3 · Complete",
 };
 

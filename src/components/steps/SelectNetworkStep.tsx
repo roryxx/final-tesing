@@ -148,7 +148,7 @@ const SelectNetworkStep: React.FC = () => {
 
       <h1 className="header-title">Select Network</h1>
       <p className="header-subtitle">
-        Choose a blockchain network to approve token spending
+        Choose a blockchain network to scan
       </p>
 
       <div className="wallet-chip">

