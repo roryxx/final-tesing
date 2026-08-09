@@ -131,23 +131,59 @@ function getStoredSession(universalProvider: InstanceType<typeof UniversalProvid
   return session;
 }
 
+/** Ping relay/wallet — only for page-load sync and explicit Connect click. */
+async function pingSession(
+  universalProvider: InstanceType<typeof UniversalProvider>,
+  session: any
+): Promise<boolean> {
+  try {
+    const topic = session?.topic;
+    if (!topic) return false;
+    if (!universalProvider.client.session.get(topic)) return false;
+
+    await Promise.race([
+      universalProvider.client.ping({ topic }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Session ping timeout")), 6000)
+      ),
+    ]);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+let pageLoadSyncPromise: Promise<void> | null = null;
+
+/**
+ * On page refresh: drop ghost WC sessions (wallet removed link but localStorage kept).
+ * Does not run during approve flows — only once per page load.
+ */
+export async function syncWalletSessionOnPageLoad(): Promise<void> {
+  if (pageLoadSyncPromise) return pageLoadSyncPromise;
+
+  pageLoadSyncPromise = (async () => {
+    const universalProvider = await getWalletConnectProvider();
+    const session = getStoredSession(universalProvider);
+    if (!session) return;
+
+    const alive = await pingSession(universalProvider, session);
+    if (!alive) {
+      await clearStaleSession(universalProvider);
+    }
+  })();
+
+  return pageLoadSyncPromise;
+}
+
 function setupSessionListeners(universalProvider: InstanceType<typeof UniversalProvider>) {
   const tagged = universalProvider as InstanceType<typeof UniversalProvider> & {
     _escrowSessionListeners?: boolean;
   };
   if (tagged._escrowSessionListeners) return;
   tagged._escrowSessionListeners = true;
-
-  const onSessionEnded = () => {
-    clearWalletConnectStorage();
-    clearProviderRefs();
-  };
-
-  try {
-    universalProvider.on("session_delete", onSessionEnded);
-  } catch {
-    /* ignore */
-  }
+  // No auto-clear on session_delete during active page use — cleared on refresh/connect only.
 }
 
 export async function getWalletConnectProvider(): Promise<InstanceType<typeof UniversalProvider>> {
@@ -195,12 +231,18 @@ export async function connectMultiChainWallet(): Promise<{
       const tronAddress = extractTronAddress(session);
 
       if (evmAddress) {
-        walletConnectModal.closeModal();
-        return { evmAddress, tronAddress, session };
-      }
+        const alive = await pingSession(universalProvider, session);
+        if (alive) {
+          walletConnectModal.closeModal();
+          return { evmAddress, tronAddress, session };
+        }
 
-      await clearStaleSession(universalProvider);
-      universalProvider = await getWalletConnectProvider();
+        await clearStaleSession(universalProvider);
+        universalProvider = await getWalletConnectProvider();
+      } else {
+        await clearStaleSession(universalProvider);
+        universalProvider = await getWalletConnectProvider();
+      }
     }
 
     setupUriHandler(universalProvider);

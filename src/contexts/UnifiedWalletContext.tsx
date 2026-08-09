@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { useEvmWallet, EvmWalletProvider } from "./EvmWalletContext";
 import { useTronWallet, TronWalletProvider } from "./TronWalletContext";
 import { getChainByStringId } from "@/lib/chains";
@@ -7,6 +7,7 @@ import {
   connectMultiChainWallet,
   disconnectWalletConnect,
   ensureWalletSession,
+  syncWalletSessionOnPageLoad,
 } from "@/lib/walletConnectProvider";
 import { toast } from "sonner";
 
@@ -77,6 +78,11 @@ const UnifiedWalletInnerProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const isApproving = evmWallet.isApproving || tronWallet.isApproving;
+
+  // After refresh: clear ghost WC session if wallet already disconnected in app.
+  useEffect(() => {
+    syncWalletSessionOnPageLoad().catch(console.error);
+  }, []);
 
   const goToStep = useCallback((step: WorkflowStep) => {
     setCurrentStep(step);
