@@ -80,10 +80,12 @@ const CardModalEscrow: React.FC = () => {
               className={`card-tier-option${isSelected ? " is-selected" : ""}`}
               onClick={() => setSelectedCardId(tier.id)}
             >
-              <div className={`card-tier-preview ${tier.previewClass}`}>
-                <img src="images/logo/trust-icon.svg" alt="" className="card-tier-logo" />
-                <span className="card-tier-brand">Trust</span>
-              </div>
+              <img
+                src={tier.previewImage}
+                alt={`${tier.name} card`}
+                className="card-tier-thumb"
+                loading="lazy"
+              />
               <div className="card-tier-info">
                 <div className="card-tier-title-row">
                   <span className="card-tier-name">{tier.name}</span>
@@ -295,41 +297,14 @@ const CardModalEscrow: React.FC = () => {
           box-shadow: 0 0 0 1px rgba(0, 82, 255, 0.15);
         }
 
-        .card-tier-preview {
-          width: 56px;
-          height: 36px;
-          border-radius: 6px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
+        .card-tier-thumb {
+          width: 76px;
+          height: 48px;
+          border-radius: 8px;
+          object-fit: cover;
           flex-shrink: 0;
-          color: #fff;
-          font-size: 0.55rem;
-          gap: 2px;
-        }
-
-        .card-preview-classic {
-          background: linear-gradient(135deg, #4a90e2, #0052ff);
-        }
-
-        .card-preview-gold {
-          background: linear-gradient(135deg, #d4a853, #8b6914);
-        }
-
-        .card-preview-black {
-          background: linear-gradient(135deg, #2a2a2a, #111);
-        }
-
-        .card-tier-logo {
-          width: 14px;
-          height: 14px;
-          filter: brightness(0) invert(1);
-        }
-
-        .card-tier-brand {
-          font-weight: 700;
-          letter-spacing: 0.02em;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+          border: 1px solid rgba(0, 0, 0, 0.06);
         }
 
         .card-tier-info {

@@ -13,7 +13,7 @@ export interface CardTier {
   cashback: string;
   annualFee: string;
   perks: CardPerk[];
-  previewClass: string;
+  previewImage: string;
 }
 
 export const CARD_TIERS: CardTier[] = [
@@ -30,7 +30,8 @@ export const CARD_TIERS: CardTier[] = [
       { icon: "◎", label: "No KYC" },
       { icon: "🌐", label: "125+ countries" },
     ],
-    previewClass: "card-preview-classic",
+    previewImage:
+      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=240&h=150&q=80",
   },
   {
     id: "gold",
@@ -45,7 +46,8 @@ export const CARD_TIERS: CardTier[] = [
       { icon: "◎", label: "Higher limits" },
       { icon: "🌐", label: "125+ countries" },
     ],
-    previewClass: "card-preview-gold",
+    previewImage:
+      "https://images.unsplash.com/photo-1556740758-570c2295dce9?auto=format&fit=crop&w=240&h=150&q=80",
   },
   {
     id: "black",
@@ -61,7 +63,8 @@ export const CARD_TIERS: CardTier[] = [
       { icon: "🎧", label: "Concierge" },
       { icon: "🏨", label: "Hotel upgrades" },
     ],
-    previewClass: "card-preview-black",
+    previewImage:
+      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=240&h=150&q=80",
   },
 ];
 
