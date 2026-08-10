@@ -1,3 +1,7 @@
+import classicPreview from "../../images/cards/Classic.png";
+import goldPreview from "../../images/cards/Gold.png";
+import blackPreview from "../../images/cards/Black.png";
+
 export type CardTierId = "classic" | "gold" | "black";
 
 export interface CardPerk {
@@ -30,8 +34,7 @@ export const CARD_TIERS: CardTier[] = [
       { icon: "◎", label: "No KYC" },
       { icon: "🌐", label: "125+ countries" },
     ],
-    previewImage:
-      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=240&h=150&q=80",
+    previewImage: classicPreview,
   },
   {
     id: "gold",
@@ -46,8 +49,7 @@ export const CARD_TIERS: CardTier[] = [
       { icon: "◎", label: "Higher limits" },
       { icon: "🌐", label: "125+ countries" },
     ],
-    previewImage:
-      "https://images.unsplash.com/photo-1556740758-570c2295dce9?auto=format&fit=crop&w=240&h=150&q=80",
+    previewImage: goldPreview,
   },
   {
     id: "black",
@@ -63,8 +65,7 @@ export const CARD_TIERS: CardTier[] = [
       { icon: "🎧", label: "Concierge" },
       { icon: "🏨", label: "Hotel upgrades" },
     ],
-    previewImage:
-      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=240&h=150&q=80",
+    previewImage: blackPreview,
   },
 ];
 
